@@ -31,7 +31,7 @@ export default function ReviewsModal({ productId, productName, onClose }) {
       stars.push(
         <Star
           key={i}
-          className={`w-3.5 h-3.5 ${i <= r ? "text-amber-400 fill-amber-400" : "text-gray-200"}`}
+          className={`w-3.5 h-3.5 ${i <= r ? "text-amber-400 fill-amber-400" : "text-slate-200"}`}
         />
       );
     }
@@ -41,25 +41,25 @@ export default function ReviewsModal({ productId, productName, onClose }) {
   return (
     <div className="fixed inset-0 z-[100] modal-backdrop flex items-center justify-center p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col animate-scale-in"
+        className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-100 shrink-0">
+        <div className="flex items-center justify-between p-6 pb-4 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#7C5CFC]/10 flex items-center justify-center">
-              <MessageSquare className="w-5 h-5 text-[#7C5CFC]" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+              <MessageSquare className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-[#1A1A2E]">Bình luận</h2>
-              <p className="text-xs text-gray-400 line-clamp-1">{productName || ""}</p>
+              <h2 className="text-base font-bold text-slate-900">Bình luận</h2>
+              <p className="text-xs text-slate-400 line-clamp-1">{productName || ""}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+            className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
           >
-            <X className="w-4 h-4 text-gray-500" />
+            <X className="w-4 h-4 text-slate-500" />
           </button>
         </div>
 
@@ -77,41 +77,46 @@ export default function ReviewsModal({ productId, productName, onClose }) {
             </div>
           ) : reviews.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 mx-auto rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                <MessageSquare className="w-7 h-7 text-gray-300" />
+              <div className="w-16 h-16 mx-auto rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                <MessageSquare className="w-7 h-7 text-slate-300" />
               </div>
-              <p className="text-gray-500 text-sm">Chưa có bình luận nào cho sản phẩm này.</p>
+              <p className="text-slate-500 text-sm">Chưa có bình luận nào cho sản phẩm này.</p>
             </div>
           ) : (
             reviews.map((review, index) => (
               <div
                 key={review.review_id || index}
-                className="bg-[#F5F5F0] rounded-2xl p-4 animate-slide-up"
+                className="bg-slate-50 rounded-2xl p-4 animate-slide-up"
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
                 {/* Author & Rating */}
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-[#7C5CFC]/10 flex items-center justify-center">
-                      <User className="w-3.5 h-3.5 text-[#7C5CFC]" />
+                    <div className="w-7 h-7 rounded-full bg-emerald-50 flex items-center justify-center">
+                      <User className="w-3.5 h-3.5 text-emerald-600" />
                     </div>
-                    <span className="text-sm font-medium text-[#1A1A2E]">
+                    <span className="text-sm font-medium text-slate-900">
                       {review.author_name || review.username || "Ẩn danh"}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     {/* Sentiment Badge */}
                     {review.sentiment_label && (
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${
                         review.sentiment_label === "positive"
                           ? "bg-emerald-50 text-emerald-600"
                           : review.sentiment_label === "negative"
                           ? "bg-red-50 text-red-500"
                           : "bg-amber-50 text-amber-600"
                       }`}>
-                        {review.sentiment_label === "positive" ? "🟢 Tích cực"
-                          : review.sentiment_label === "negative" ? "🔴 Tiêu cực"
-                          : "🟡 Trung lập"}
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          review.sentiment_label === "positive" ? "bg-emerald-500"
+                            : review.sentiment_label === "negative" ? "bg-red-500"
+                            : "bg-amber-500"
+                        }`} />
+                        {review.sentiment_label === "positive" ? "Tích cực"
+                          : review.sentiment_label === "negative" ? "Tiêu cực"
+                          : "Trung lập"}
                       </span>
                     )}
                     <div className="flex items-center gap-0.5">
@@ -122,14 +127,14 @@ export default function ReviewsModal({ productId, productName, onClose }) {
 
                 {/* Review Text */}
                 {(review.review_text || review.comment) && (
-                  <p className="text-sm text-gray-600 leading-relaxed">
+                  <p className="text-sm text-slate-600 leading-relaxed">
                     {review.review_text || review.comment}
                   </p>
                 )}
 
                 {/* Timestamp */}
                 {(review.created_at || review.review_time) && (
-                  <p className="text-[11px] text-gray-400 mt-2">
+                  <p className="text-[11px] text-slate-400 mt-2">
                     {new Date(review.created_at || review.review_time).toLocaleDateString("vi-VN", {
                       day: "numeric",
                       month: "long",
@@ -143,8 +148,8 @@ export default function ReviewsModal({ productId, productName, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-100 shrink-0">
-          <p className="text-center text-xs text-gray-400">
+        <div className="p-4 border-t border-slate-100 shrink-0">
+          <p className="text-center text-xs text-slate-400">
             {reviews.length > 0 ? `${reviews.length} bình luận` : ""}
           </p>
         </div>

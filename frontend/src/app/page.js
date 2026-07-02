@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Package, DollarSign, Star, MessageSquare, Hash, Tag } from "lucide-react";
+import { Package, DollarSign, Star, MessageSquare, Hash, Tag, AlertTriangle } from "lucide-react";
 import KpiCard from "@/components/KpiCard";
 import RatingChart from "@/components/RatingChart";
 import SentimentChart from "@/components/SentimentChart";
@@ -11,13 +11,13 @@ import ProductModal from "@/components/ProductModal";
 import ReviewsModal from "@/components/ReviewsModal";
 import { getOverview, getRatingDistribution, getTopProducts, getSentimentOverview, getKeywordStats } from "@/lib/api";
 
-// Bảng màu xoay vòng cho các keyword cards
+// Bảng màu xoay vòng cho các keyword cards — no violet (too close to AI purple)
 const KEYWORD_COLORS = [
-  { bg: "bg-violet-50", border: "border-violet-200", text: "text-violet-700", badge: "bg-violet-100 text-violet-600", accent: "#7C3AED" },
-  { bg: "bg-sky-50", border: "border-sky-200", text: "text-sky-700", badge: "bg-sky-100 text-sky-600", accent: "#0284C7" },
   { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", badge: "bg-emerald-100 text-emerald-600", accent: "#059669" },
+  { bg: "bg-sky-50", border: "border-sky-200", text: "text-sky-700", badge: "bg-sky-100 text-sky-600", accent: "#0284C7" },
   { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", badge: "bg-amber-100 text-amber-600", accent: "#D97706" },
   { bg: "bg-rose-50", border: "border-rose-200", text: "text-rose-700", badge: "bg-rose-100 text-rose-600", accent: "#E11D48" },
+  { bg: "bg-teal-50", border: "border-teal-200", text: "text-teal-700", badge: "bg-teal-100 text-teal-600", accent: "#0D9488" },
   { bg: "bg-cyan-50", border: "border-cyan-200", text: "text-cyan-700", badge: "bg-cyan-100 text-cyan-600", accent: "#0891B2" },
 ];
 
@@ -71,12 +71,12 @@ export default function OverviewPage() {
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center space-y-4 animate-fade-in">
           <div className="w-20 h-20 mx-auto rounded-2xl bg-red-50 flex items-center justify-center">
-            <span className="text-4xl">⚠️</span>
+            <AlertTriangle className="w-10 h-10 text-red-400" />
           </div>
-          <h2 className="text-xl font-bold text-[#1A1A2E]">Không thể kết nối API</h2>
-          <p className="text-gray-500 text-sm max-w-md">
+          <h2 className="text-xl font-bold text-slate-900">Không thể kết nối API</h2>
+          <p className="text-slate-500 text-sm max-w-md">
             Hãy đảm bảo Backend API đang chạy tại{" "}
-            <code className="text-[#7C5CFC] bg-[#7C5CFC]/5 px-2 py-0.5 rounded-lg">localhost:8000</code>
+            <code className="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg">localhost:8000</code>
           </p>
           <p className="text-xs text-red-400">{error}</p>
         </div>
@@ -108,29 +108,29 @@ export default function OverviewPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-[#1A1A2E] tracking-tight">Dashboard Overview</h1>
-            <p className="text-gray-500 mt-1 text-sm">Tổng quan dữ liệu thương mại điện tử Shopee</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard Overview</h1>
+            <p className="text-slate-500 mt-1 text-sm">Tổng quan dữ liệu thương mại điện tử Shopee</p>
           </div>
-          <div className="text-xs text-gray-400 bg-white px-4 py-2 rounded-xl border border-gray-100">
+          <div className="text-xs text-slate-400 bg-white px-4 py-2 rounded-xl border border-slate-100">
             {new Date().toLocaleDateString("vi-VN", { day: "numeric", month: "long", year: "numeric" })}
           </div>
         </div>
 
         {/* Global Filter Bar */}
-        <div className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between gap-4 flex-wrap">
+        <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-gray-500 uppercase">Thời gian:</span>
-              <select className="bg-gray-50 border border-gray-200 text-sm rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-[#7C5CFC]/20 text-[#1A1A2E]">
+              <span className="text-xs font-semibold text-slate-500 uppercase">Thời gian:</span>
+              <select className="bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-900">
                 <option>Tất cả thời gian</option>
                 <option>7 ngày qua</option>
                 <option>30 ngày qua</option>
               </select>
             </div>
-            <div className="w-px h-5 bg-gray-200 hidden sm:block"></div>
+            <div className="w-px h-5 bg-slate-200 hidden sm:block"></div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-gray-500 uppercase">Khoảng giá:</span>
-              <select className="bg-gray-50 border border-gray-200 text-sm rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-[#7C5CFC]/20 text-[#1A1A2E]">
+              <span className="text-xs font-semibold text-slate-500 uppercase">Khoảng giá:</span>
+              <select className="bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-900">
                 <option>Tất cả mức giá</option>
                 <option>Dưới 100k</option>
                 <option>100k - 500k</option>
@@ -138,7 +138,7 @@ export default function OverviewPage() {
               </select>
             </div>
           </div>
-          <button className="text-xs font-semibold text-white bg-[#1A1A2E] px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+          <button className="text-xs font-semibold text-white bg-slate-900 px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors">
             Áp dụng bộ lọc
           </button>
         </div>
@@ -149,7 +149,7 @@ export default function OverviewPage() {
             title="Tổng sản phẩm"
             value={overview?.total_products?.toLocaleString("vi-VN") || "0"}
             icon={Package}
-            color="purple"
+            color="emerald"
             trend="+12%"
             sparklineData={[{val: 10}, {val: 15}, {val: 20}, {val: 22}, {val: 25}, {val: 30}, {val: 28}, {val: 35}]}
           />
@@ -157,14 +157,14 @@ export default function OverviewPage() {
             title="Từ khóa đã cào"
             value={overview?.total_keywords || 0}
             icon={Hash}
-            color="green"
+            color="teal"
             trend="+2"
             sparklineData={[{val: 1}, {val: 1}, {val: 2}, {val: 2}, {val: 3}, {val: 3}, {val: 4}, {val: 4}]}
             subtitle={keywordStats.map(k => k.keyword).join(", ")}
           />
           <KpiCard
             title="Rating trung bình"
-            value={`${(overview?.avg_rating || 0).toFixed(1)} ⭐`}
+            value={`${(overview?.avg_rating || 0).toFixed(1)}`}
             icon={Star}
             color="amber"
             trend="+0.1"
@@ -184,11 +184,11 @@ export default function OverviewPage() {
         {keywordStats.length > 0 && (
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <h2 className="text-lg font-bold text-[#1A1A2E] flex items-center gap-2">
-                <Tag className="w-5 h-5 text-[#7C5CFC]" />
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <Tag className="w-5 h-5 text-emerald-600" />
                 Thống kê theo từ khóa
               </h2>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-slate-400">
                 {selectedKeywords.length === 0
                   ? "Chọn từ khóa bên dưới để hiển thị"
                   : `Đang hiện ${selectedKeywords.length} / ${keywordStats.length} từ khóa`}
@@ -207,10 +207,10 @@ export default function OverviewPage() {
                     className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all duration-200 ${
                       isActive
                         ? `${color.badge} ${color.border} shadow-sm`
-                        : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700"
+                        : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700"
                     }`}
                   >
-                    🏷️ {kw.keyword}
+                    {kw.keyword}
                     <span className="ml-1.5 text-xs opacity-70">({kw.total_products})</span>
                   </button>
                 );
@@ -227,11 +227,11 @@ export default function OverviewPage() {
                 const color = KEYWORD_COLORS[origIdx % KEYWORD_COLORS.length];
                 const rd = kw.rating_distribution || {};
                 const starData = [
-                  { label: "1⭐", value: rd.star_1 || 0, color: "#EF4444" },
-                  { label: "2⭐", value: rd.star_2 || 0, color: "#F97316" },
-                  { label: "3⭐", value: rd.star_3 || 0, color: "#EAB308" },
-                  { label: "4⭐", value: rd.star_4 || 0, color: "#22C55E" },
-                  { label: "5⭐", value: rd.star_5 || 0, color: "#7C5CFC" },
+                  { label: "1", value: rd.star_1 || 0, color: "#EF4444" },
+                  { label: "2", value: rd.star_2 || 0, color: "#F97316" },
+                  { label: "3", value: rd.star_3 || 0, color: "#EAB308" },
+                  { label: "4", value: rd.star_4 || 0, color: "#22C55E" },
+                  { label: "5", value: rd.star_5 || 0, color: "#059669" },
                 ];
                 const maxStar = Math.max(...starData.map(s => s.value), 1);
 
@@ -243,9 +243,9 @@ export default function OverviewPage() {
                     {/* Keyword Header */}
                     <div className="flex items-center justify-between mb-4">
                       <span className={`${color.badge} text-sm font-bold px-3 py-1 rounded-full`}>
-                        🏷️ {kw.keyword}
+                        {kw.keyword}
                       </span>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-slate-400">
                         {kw.total_products} sản phẩm
                       </span>
                     </div>
@@ -253,31 +253,32 @@ export default function OverviewPage() {
                     {/* Stats Grid */}
                     <div className="grid grid-cols-3 gap-3 mb-4">
                       <div className="bg-white/70 rounded-xl p-3 text-center">
-                        <p className="text-lg font-bold text-[#1A1A2E]">
+                        <p className="text-lg font-bold text-slate-900">
                           ₫{(kw.avg_price || 0).toLocaleString("vi-VN")}
                         </p>
-                        <p className="text-[10px] text-gray-500 mt-0.5">Giá TB</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">Giá TB</p>
                       </div>
                       <div className="bg-white/70 rounded-xl p-3 text-center">
-                        <p className="text-lg font-bold text-[#1A1A2E]">
-                          {(kw.avg_rating || 0).toFixed(1)} ⭐
+                        <p className="text-lg font-bold text-slate-900">
+                          {(kw.avg_rating || 0).toFixed(1)}
                         </p>
-                        <p className="text-[10px] text-gray-500 mt-0.5">Rating TB</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">Rating TB</p>
                       </div>
                       <div className="bg-white/70 rounded-xl p-3 text-center">
-                        <p className="text-lg font-bold text-[#1A1A2E]">
+                        <p className="text-lg font-bold text-slate-900">
                           {(kw.total_reviews || 0).toLocaleString("vi-VN")}
                         </p>
-                        <p className="text-[10px] text-gray-500 mt-0.5">Đánh giá</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">Đánh giá</p>
                       </div>
                     </div>
 
                     {/* Mini Rating Distribution Bar */}
                     <div className="space-y-1.5">
-                      <p className="text-xs font-medium text-gray-500">Phân bố đánh giá</p>
+                      <p className="text-xs font-medium text-slate-500">Phân bố đánh giá</p>
                       {starData.map((star) => (
                         <div key={star.label} className="flex items-center gap-2">
-                          <span className="text-[10px] w-6 text-gray-500 text-right">{star.label}</span>
+                          <span className="text-[10px] w-4 text-slate-500 text-right">{star.label}</span>
+                          <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
                           <div className="flex-1 bg-white/60 rounded-full h-2.5 overflow-hidden">
                             <div
                               className="h-full rounded-full transition-all duration-500"
@@ -288,7 +289,7 @@ export default function OverviewPage() {
                               }}
                             />
                           </div>
-                          <span className="text-[10px] w-8 text-gray-400">{star.value}</span>
+                          <span className="text-[10px] w-8 text-slate-400">{star.value}</span>
                         </div>
                       ))}
                     </div>
@@ -318,7 +319,7 @@ export default function OverviewPage() {
             products={topProducts
               .filter(p => !ratingFilter || Math.round(p.avg_rating || 0) === ratingFilter)
               .slice(0, 5)}
-            title={ratingFilter ? `🏆 Top 5 sản phẩm (${ratingFilter}⭐)` : "🏆 Top 5 sản phẩm — Rating"}
+            title={ratingFilter ? `Top 5 sản phẩm (${ratingFilter} Star)` : "Top 5 sản phẩm — Rating"}
             onClickProduct={(p) => setSelectedProduct(p)}
           />
         </div>

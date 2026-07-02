@@ -6,7 +6,6 @@ export default function TopProductsTable({ products, title = "Top sản phẩm",
   const handleExportCSV = () => {
     if (!products || products.length === 0) return;
     
-    // Create CSV content
     const headers = ["Tên sản phẩm", "Shop", "Giá", "Rating", "Đánh giá"];
     const csvRows = [headers.join(",")];
     
@@ -31,24 +30,24 @@ export default function TopProductsTable({ products, title = "Top sản phẩm",
 
   if (!products || products.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col justify-center h-full">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex flex-col justify-center h-full">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-[#1A1A2E]">{title}</h3>
+          <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
         </div>
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-400 text-sm">Chưa có dữ liệu.</p>
+          <p className="text-slate-400 text-sm">Chưa có dữ liệu.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col h-full">
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex flex-col h-full">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-[#1A1A2E]">{title}</h3>
+        <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
         <button 
           onClick={handleExportCSV}
-          className="text-xs flex items-center gap-1.5 text-gray-500 hover:text-[#7C5CFC] transition-colors"
+          className="text-xs flex items-center gap-1.5 text-slate-500 hover:text-emerald-600 transition-colors"
           title="Tải xuống CSV"
         >
           <Download className="w-3.5 h-3.5" />
@@ -58,33 +57,33 @@ export default function TopProductsTable({ products, title = "Top sản phẩm",
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-gray-100">
-              <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider pb-3 pr-3">#</th>
-              <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider pb-3 pr-3">Sản phẩm</th>
-              <th className="text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider pb-3 pr-3">Giá</th>
-              <th className="text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider pb-3 pr-3">Rating</th>
-              <th className="text-right text-[11px] font-medium text-gray-400 uppercase tracking-wider pb-3">Reviews</th>
+            <tr className="border-b border-slate-100">
+              <th className="text-left text-[11px] font-medium text-slate-400 uppercase tracking-wider pb-3 pr-3">#</th>
+              <th className="text-left text-[11px] font-medium text-slate-400 uppercase tracking-wider pb-3 pr-3">Sản phẩm</th>
+              <th className="text-right text-[11px] font-medium text-slate-400 uppercase tracking-wider pb-3 pr-3">Giá</th>
+              <th className="text-right text-[11px] font-medium text-slate-400 uppercase tracking-wider pb-3 pr-3">Rating</th>
+              <th className="text-right text-[11px] font-medium text-slate-400 uppercase tracking-wider pb-3">Reviews</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-slate-50">
             {products.map((product, index) => (
               <tr
                 key={product.product_id || index}
                 onClick={() => onClickProduct && onClickProduct(product)}
-                className={`hover:bg-[#7C5CFC]/[0.03] transition-colors duration-150 ${onClickProduct ? "cursor-pointer" : ""}`}
+                className={`hover:bg-emerald-50/50 transition-colors duration-150 ${onClickProduct ? "cursor-pointer" : ""}`}
               >
                 <td className="py-3 pr-3">
                   <span className={`text-xs font-bold ${
-                    index === 0 ? "text-amber-500" : index === 1 ? "text-gray-400" : index === 2 ? "text-amber-700" : "text-gray-300"
+                    index === 0 ? "text-amber-500" : index === 1 ? "text-slate-400" : index === 2 ? "text-amber-700" : "text-slate-300"
                   }`}>
                     {index + 1}
                   </span>
                 </td>
                 <td className="py-3 pr-3">
-                  <p className="text-sm text-[#1A1A2E] font-medium line-clamp-1 max-w-[200px]">
+                  <p className="text-sm text-slate-900 font-medium line-clamp-1 max-w-[200px]">
                     {product.name || "N/A"}
                   </p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">{product.shop_name || ""}</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">{product.shop_name || ""}</p>
                 </td>
                 <td className="py-3 pr-3 text-right">
                   <span className="text-sm text-emerald-600 font-semibold">
@@ -94,13 +93,13 @@ export default function TopProductsTable({ products, title = "Top sản phẩm",
                 <td className="py-3 pr-3 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                    <span className="text-sm text-[#1A1A2E] font-medium">
+                    <span className="text-sm text-slate-900 font-medium">
                       {product.avg_rating ? Number(product.avg_rating).toFixed(1) : "0"}
                     </span>
                   </div>
                 </td>
                 <td className="py-3 text-right">
-                  <span className="text-sm text-gray-500">{product.total_reviews || 0}</span>
+                  <span className="text-sm text-slate-500">{product.total_reviews || 0}</span>
                 </td>
               </tr>
             ))}

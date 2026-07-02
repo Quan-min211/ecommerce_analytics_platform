@@ -76,13 +76,13 @@ export default function MonitoringPage() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1A2E] tracking-tight">System Monitoring</h1>
-          <p className="text-gray-500 mt-1 text-sm">Trạng thái hệ thống và làm mới dữ liệu Data Lakehouse</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">System Monitoring</h1>
+          <p className="text-slate-500 mt-1 text-sm">Trạng thái hệ thống và làm mới dữ liệu Data Lakehouse</p>
         </div>
         <button
           onClick={handleReload}
           disabled={reloading || !isHealthy}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#7C5CFC] text-white rounded-xl text-sm font-medium hover:bg-[#6A4BE0] transition-colors shadow-lg shadow-[#7C5CFC]/25 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <RefreshCw className={`w-4 h-4 ${reloading ? "animate-spin" : ""}`} />
           {reloading ? "Đang tải lại..." : "Reload Data"}
@@ -99,11 +99,11 @@ export default function MonitoringPage() {
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Status Card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative overflow-hidden group">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-500" />
           <div className="flex items-start justify-between relative z-10">
             <div>
-              <p className="text-sm font-medium text-gray-500 mb-1">API Status</p>
+              <p className="text-sm font-medium text-slate-500 mb-1">API Status</p>
               <div className="flex items-center gap-2">
                 <h3 className={`text-2xl font-bold ${isHealthy ? "text-emerald-600" : "text-red-600"}`}>
                   {isHealthy ? "Healthy" : "Down"}
@@ -120,28 +120,28 @@ export default function MonitoringPage() {
         </div>
 
         {/* Products Card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#7C5CFC]/5 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-500" />
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-500" />
           <div className="flex items-start justify-between relative z-10">
             <div>
-              <p className="text-sm font-medium text-gray-500 mb-1">Total Products Loaded</p>
-              <h3 className="text-2xl font-bold text-[#1A1A2E] tracking-tight">
+              <p className="text-sm font-medium text-slate-500 mb-1">Total Products Loaded</p>
+              <h3 className="text-2xl font-bold text-slate-900 tracking-tight">
                 {health?.total_products ? health.total_products.toLocaleString("vi-VN") : "0"}
               </h3>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-[#7C5CFC]/5 text-[#7C5CFC] flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <Database className="w-6 h-6" />
             </div>
           </div>
         </div>
 
         {/* Reviews Card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative overflow-hidden group">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-500" />
           <div className="flex items-start justify-between relative z-10">
             <div>
-              <p className="text-sm font-medium text-gray-500 mb-1">Total Reviews Loaded</p>
-              <h3 className="text-2xl font-bold text-[#1A1A2E] tracking-tight">
+              <p className="text-sm font-medium text-slate-500 mb-1">Total Reviews Loaded</p>
+              <h3 className="text-2xl font-bold text-slate-900 tracking-tight">
                 {health?.total_reviews ? health.total_reviews.toLocaleString("vi-VN") : "0"}
               </h3>
             </div>
@@ -154,42 +154,42 @@ export default function MonitoringPage() {
 
       {/* External Monitoring Tools */}
       <div>
-        <h3 className="text-lg font-bold text-[#1A1A2E] mb-4 mt-8">External Dashboards</h3>
+        <h3 className="text-lg font-bold text-slate-900 mb-4 mt-8">External Dashboards</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <a
             href={host ? `http://${host}:3001` : "#"}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-between p-5 bg-white border border-gray-100 rounded-2xl hover:border-[#7C5CFC]/30 hover:shadow-md transition-all group cursor-pointer"
+            className="flex items-center justify-between p-5 bg-white border border-slate-100 rounded-2xl hover:border-emerald-500/30 hover:shadow-md transition-all group cursor-pointer"
           >
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/Grafana_icon.svg" alt="Grafana" className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="text-base font-semibold text-[#1A1A2E] group-hover:text-[#7C5CFC] transition-colors">Grafana Dashboard</h4>
-                <p className="text-sm text-gray-500">Live API metrics (Port 3001)</p>
+                <h4 className="text-base font-semibold text-slate-900 group-hover:text-emerald-600 transition-colors">Grafana Dashboard</h4>
+                <p className="text-sm text-slate-500">Live API metrics (Port 3001)</p>
               </div>
             </div>
-            <ExternalLink className="w-5 h-5 text-gray-300 group-hover:text-[#7C5CFC] transition-colors" />
+            <ExternalLink className="w-5 h-5 text-slate-300 group-hover:text-emerald-600 transition-colors" />
           </a>
 
           <a
             href={host ? `http://${host}:9090` : "#"}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-between p-5 bg-white border border-gray-100 rounded-2xl hover:border-[#7C5CFC]/30 hover:shadow-md transition-all group cursor-pointer"
+            className="flex items-center justify-between p-5 bg-white border border-slate-100 rounded-2xl hover:border-emerald-500/30 hover:shadow-md transition-all group cursor-pointer"
           >
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/3/38/Prometheus_software_logo.svg" alt="Prometheus" className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="text-base font-semibold text-[#1A1A2E] group-hover:text-[#7C5CFC] transition-colors">Prometheus Server</h4>
-                <p className="text-sm text-gray-500">Metrics scraper (Port 9090)</p>
+                <h4 className="text-base font-semibold text-slate-900 group-hover:text-emerald-600 transition-colors">Prometheus Server</h4>
+                <p className="text-sm text-slate-500">Metrics scraper (Port 9090)</p>
               </div>
             </div>
-            <ExternalLink className="w-5 h-5 text-gray-300 group-hover:text-[#7C5CFC] transition-colors" />
+            <ExternalLink className="w-5 h-5 text-slate-300 group-hover:text-emerald-600 transition-colors" />
           </a>
         </div>
       </div>

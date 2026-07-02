@@ -16,20 +16,20 @@ export default function ProductModal({ product, onClose, onViewReviews }) {
   return (
     <div className="fixed inset-0 z-[100] modal-backdrop flex items-center justify-center p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto animate-scale-in"
+        className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between p-6 pb-4 border-b border-gray-100">
+        <div className="flex items-start justify-between p-6 pb-4 border-b border-slate-100">
           <div className="flex-1 pr-4">
-            <h2 className="text-lg font-bold text-[#1A1A2E] leading-snug">{product.name || "Sản phẩm"}</h2>
-            <p className="text-sm text-gray-400 mt-1">{product.shop_name || ""}</p>
+            <h2 className="text-lg font-bold text-slate-900 leading-snug">{product.name || "Sản phẩm"}</h2>
+            <p className="text-sm text-slate-400 mt-1">{product.shop_name || ""}</p>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors shrink-0"
+            className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors shrink-0"
           >
-            <X className="w-4 h-4 text-gray-500" />
+            <X className="w-4 h-4 text-slate-500" />
           </button>
         </div>
 
@@ -37,16 +37,16 @@ export default function ProductModal({ product, onClose, onViewReviews }) {
         <div className="p-6 pb-4">
           <div className="flex items-center gap-6">
             <div>
-              <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Giá</p>
-              <p className="text-3xl font-bold text-[#7C5CFC]">
+              <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Giá</p>
+              <p className="text-3xl font-bold text-emerald-600">
                 {product.price ? `₫${Number(product.price).toLocaleString("vi-VN")}` : "—"}
               </p>
             </div>
-            <div className="w-px h-12 bg-gray-100" />
+            <div className="w-px h-12 bg-slate-100" />
             <div>
-              <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Rating</p>
+              <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Rating</p>
               <div className="flex items-center gap-2">
-                <span className="text-3xl font-bold text-[#1A1A2E]">
+                <span className="text-3xl font-bold text-slate-900">
                   {product.avg_rating ? Number(product.avg_rating).toFixed(1) : "0"}
                 </span>
                 <Star className="w-6 h-6 text-amber-400 fill-amber-400" />
@@ -57,8 +57,8 @@ export default function ProductModal({ product, onClose, onViewReviews }) {
 
         {/* Star Breakdown */}
         <div className="px-6 pb-4">
-          <div className="bg-[#F5F5F0] rounded-2xl p-4">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Phân bố đánh giá</p>
+          <div className="bg-slate-50 rounded-2xl p-4">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">Phân bố đánh giá</p>
             <div className="space-y-2">
               {[5, 4, 3, 2, 1].map((star) => {
                 const count = product[`star_${star}_count`] || 0;
@@ -66,19 +66,20 @@ export default function ProductModal({ product, onClose, onViewReviews }) {
                 const pct = Math.round((count / total) * 100);
                 return (
                   <div key={star} className="flex items-center gap-2 text-sm">
-                    <span className="w-6 text-right text-gray-500 font-medium">{star}★</span>
-                    <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
+                    <span className="w-6 text-right text-slate-500 font-medium">{star}</span>
+                    <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                    <div className="flex-1 h-2 rounded-full bg-slate-200 overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-[#7C5CFC] transition-all duration-500"
+                        className="h-full rounded-full bg-emerald-500 transition-all duration-500"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <span className="w-8 text-right text-gray-400 text-xs">{count}</span>
+                    <span className="w-8 text-right text-slate-400 text-xs">{count}</span>
                   </div>
                 );
               })}
             </div>
-            <p className="text-center text-xs text-gray-400 mt-3">
+            <p className="text-center text-xs text-slate-400 mt-3">
               Tổng {product.total_reviews || 0} đánh giá
             </p>
           </div>
@@ -90,11 +91,11 @@ export default function ProductModal({ product, onClose, onViewReviews }) {
             {details.map(({ label, value, icon: DetailIcon }) =>
               value ? (
                 <div key={label} className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400 flex items-center gap-2">
+                  <span className="text-slate-400 flex items-center gap-2">
                     {DetailIcon && <DetailIcon className="w-3.5 h-3.5" />}
                     {label}
                   </span>
-                  <span className="text-[#1A1A2E] font-medium">{value}</span>
+                  <span className="text-slate-900 font-medium">{value}</span>
                 </div>
               ) : null
             )}
@@ -102,19 +103,20 @@ export default function ProductModal({ product, onClose, onViewReviews }) {
         </div>
 
         {/* Actions */}
-        <div className="p-6 pt-4 border-t border-gray-100 flex gap-3">
+        <div className="p-6 pt-4 border-t border-slate-100 flex gap-3">
           <button
             onClick={() => onViewReviews && onViewReviews(product.product_id)}
-            className="flex-1 py-3 rounded-2xl bg-[#7C5CFC] text-white text-sm font-semibold hover:bg-[#6A4CE8] transition-colors shadow-lg shadow-[#7C5CFC]/20"
+            className="flex-1 py-3 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
           >
-            💬 Xem bình luận ({product.total_reviews || 0})
+            <Star className="w-4 h-4" />
+            Xem bình luận ({product.total_reviews || 0})
           </button>
           {product.url && (
             <a
               href={product.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 py-3 rounded-2xl border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-sm"
+              className="px-4 py-3 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors flex items-center gap-1.5 text-sm"
             >
               <ExternalLink className="w-4 h-4" />
             </a>

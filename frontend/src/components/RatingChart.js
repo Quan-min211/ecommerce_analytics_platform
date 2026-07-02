@@ -4,8 +4,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
 
-const COLORS = ["#EF4444", "#F97316", "#EAB308", "#22C55E", "#7C5CFC"];
-const LABELS = ["1 ⭐", "2 ⭐", "3 ⭐", "4 ⭐", "5 ⭐"];
+const COLORS = ["#EF4444", "#F97316", "#EAB308", "#22C55E", "#059669"];
+const LABELS = ["1 Star", "2 Star", "3 Star", "4 Star", "5 Star"];
 
 export default function RatingChart({ data, height = 280, title = "Phân bố đánh giá", onBarClick }) {
   if (!data) return null;
@@ -19,25 +19,25 @@ export default function RatingChart({ data, height = 280, title = "Phân bố đ
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-[#1A1A2E]">{title}</h3>
-        <span className="text-xs text-gray-400">Tổng: {data.total || 0}</span>
+        <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+        <span className="text-xs text-slate-400">Total: {data.total || 0}</span>
       </div>
       <ResponsiveContainer width="100%" height={height}>
         <BarChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" vertical={false} />
-          <XAxis dataKey="name" tick={{ fill: "#6B7280", fontSize: 12 }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+          <XAxis dataKey="name" tick={{ fill: "#64748B", fontSize: 12 }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fill: "#94A3B8", fontSize: 11 }} axisLine={false} tickLine={false} />
           <Tooltip
             contentStyle={{
               backgroundColor: "#FFFFFF",
-              border: "1px solid #E5E7EB",
+              border: "1px solid #E2E8F0",
               borderRadius: "12px",
-              color: "#1A1A2E",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+              color: "#0F172A",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
             }}
-            cursor={{ fill: "rgba(124, 92, 252, 0.06)" }}
+            cursor={{ fill: "rgba(5, 150, 105, 0.06)" }}
           />
           <Bar 
             dataKey="value" 

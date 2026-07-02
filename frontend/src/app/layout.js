@@ -15,7 +15,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="vi" className={`${inter.variable} h-full`}>
-      <body className="min-h-full bg-[#F5F5F0] text-[#1A1A2E] font-sans antialiased">
+      <body className="min-h-full bg-[#F8FAFB] text-slate-900 font-sans antialiased">
         <Sidebar />
         <main className="ml-[260px] min-h-screen">
           <div className="p-8">{children}</div>

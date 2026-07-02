@@ -1,11 +1,12 @@
 "use client";
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 const COLORS = {
-  positive: "#10B981",
-  negative: "#EF4444",
-  neutral: "#F59E0B",
+  positive: "#059669",
+  negative: "#DC2626",
+  neutral: "#D97706",
 };
 
 const LABELS = {
@@ -14,10 +15,10 @@ const LABELS = {
   neutral: "Trung lập",
 };
 
-const EMOJIS = {
-  positive: "🟢",
-  negative: "🔴",
-  neutral: "🟡",
+const ICONS = {
+  positive: TrendingUp,
+  negative: TrendingDown,
+  neutral: Minus,
 };
 
 const CustomTooltip = ({ active, payload, total }) => {
@@ -25,11 +26,11 @@ const CustomTooltip = ({ active, payload, total }) => {
     const d = payload[0].payload;
     const pct = ((d.value / total) * 100).toFixed(1);
     return (
-      <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-lg">
-        <p className="text-sm font-medium text-[#1A1A2E]">
-          {EMOJIS[d.name]} {d.label}
+      <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-lg">
+        <p className="text-sm font-medium text-slate-900">
+          {d.label}
         </p>
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-slate-500 mt-1">
           {d.value} reviews ({pct}%)
         </p>
       </div>
@@ -41,10 +42,10 @@ const CustomTooltip = ({ active, payload, total }) => {
 export default function SentimentChart({ data, height = 260 }) {
   if (!data || data.total === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h3 className="text-base font-semibold text-[#1A1A2E] mb-4">🧠 Phân tích cảm xúc</h3>
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+        <h3 className="text-sm font-semibold text-slate-900 mb-4">Phân tích cảm xúc</h3>
         <div className="flex items-center justify-center h-40">
-          <p className="text-sm text-gray-400">Chưa có dữ liệu sentiment. Chạy ML pipeline trước.</p>
+          <p className="text-sm text-slate-400">Chưa có dữ liệu sentiment. Chạy ML pipeline trước.</p>
         </div>
       </div>
     );
@@ -58,10 +59,10 @@ export default function SentimentChart({ data, height = 260 }) {
 
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-base font-semibold text-[#1A1A2E]">🧠 Phân tích cảm xúc</h3>
-        <span className="text-xs text-gray-400">{data.total} reviews</span>
+        <h3 className="text-sm font-semibold text-slate-900">Phân tích cảm xúc</h3>
+        <span className="text-xs text-slate-400">{data.total} reviews</span>
       </div>
 
       <div className="flex items-center gap-6">
@@ -88,8 +89,8 @@ export default function SentimentChart({ data, height = 260 }) {
           </ResponsiveContainer>
           {/* Center label */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold text-[#1A1A2E]">{data.positive_pct}%</span>
-            <span className="text-[10px] text-gray-400">Tích cực</span>
+            <span className="text-2xl font-bold text-slate-900">{data.positive_pct}%</span>
+            <span className="text-[10px] text-slate-400">Tích cực</span>
           </div>
         </div>
 
@@ -99,21 +100,25 @@ export default function SentimentChart({ data, height = 260 }) {
             { key: "positive", count: data.positive, pct: data.positive_pct },
             { key: "negative", count: data.negative, pct: data.negative_pct },
             { key: "neutral", count: data.neutral, pct: data.neutral_pct },
-          ].map(({ key, count, pct }) => (
-            <div key={key} className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: COLORS[key] }}
-                />
-                <span className="text-sm text-gray-600">{LABELS[key]}</span>
+          ].map(({ key, count, pct }) => {
+            const SentIcon = ICONS[key];
+            return (
+              <div key={key} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: COLORS[key] }}
+                  />
+                  <SentIcon className="w-3.5 h-3.5" style={{ color: COLORS[key] }} />
+                  <span className="text-sm text-slate-600">{LABELS[key]}</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-semibold text-slate-900">{count}</span>
+                  <span className="text-xs text-slate-400 ml-1">({pct}%)</span>
+                </div>
               </div>
-              <div className="text-right">
-                <span className="text-sm font-semibold text-[#1A1A2E]">{count}</span>
-                <span className="text-xs text-gray-400 ml-1">({pct}%)</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
