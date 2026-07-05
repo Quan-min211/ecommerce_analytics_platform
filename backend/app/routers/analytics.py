@@ -78,3 +78,12 @@ async def get_keyword_stats():
     - Phân bố rating (1-5 sao)
     """
     return data_service.get_keyword_stats()
+
+
+@router.get("/negative-topics", summary="Chủ đề đánh giá tiêu cực")
+async def get_negative_topics():
+    """
+    Trả về danh sách các cụm từ (n-grams) xuất hiện nhiều nhất trong các đánh giá tiêu cực.
+    Dữ liệu được trích xuất bằng Machine Learning (Topic Modeling).
+    """
+    return data_service.get_negative_topics()

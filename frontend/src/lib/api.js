@@ -42,6 +42,10 @@ export async function getKeywordStats() {
   return fetchAPI("/api/analytics/keyword-stats");
 }
 
+export async function getNegativeTopics() {
+  return fetchAPI("/api/analytics/negative-topics");
+}
+
 // === Products ===
 
 export async function getProducts({ page = 1, pageSize = 20, search = "", sortBy = "avg_rating", sortOrder = "desc" } = {}) {

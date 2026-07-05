@@ -9,7 +9,8 @@ import TopProductsTable from "@/components/TopProductsTable";
 import ScatterChart from "@/components/ScatterChart";
 import ProductModal from "@/components/ProductModal";
 import ReviewsModal from "@/components/ReviewsModal";
-import { getOverview, getRatingDistribution, getTopProducts, getSentimentOverview, getKeywordStats } from "@/lib/api";
+import NegativeTopics from "@/components/NegativeTopics";
+import { getOverview, getRatingDistribution, getTopProducts, getSentimentOverview, getKeywordStats, getNegativeTopics } from "@/lib/api";
 
 // Bảng màu xoay vòng cho các keyword cards — no violet (too close to AI purple)
 const KEYWORD_COLORS = [
@@ -26,6 +27,7 @@ export default function OverviewPage() {
   const [ratingDist, setRatingDist] = useState(null);
   const [topProducts, setTopProducts] = useState([]);
   const [sentiment, setSentiment] = useState(null);
+  const [negativeTopics, setNegativeTopics] = useState([]);
   const [keywordStats, setKeywordStats] = useState([]);
   const [selectedKeywords, setSelectedKeywords] = useState([]);
   const [ratingFilter, setRatingFilter] = useState(null);
@@ -45,18 +47,20 @@ export default function OverviewPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [ov, rd, tp, sm, ks] = await Promise.all([
+        const [ov, rd, tp, sm, ks, nt] = await Promise.all([
           getOverview(),
           getRatingDistribution(),
           getTopProducts("avg_rating", 30),
           getSentimentOverview(),
           getKeywordStats(),
+          getNegativeTopics(),
         ]);
         setOverview(ov);
         setRatingDist(rd);
         setTopProducts(tp);
         setSentiment(sm);
         setKeywordStats(ks);
+        setNegativeTopics(nt);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -310,18 +314,27 @@ export default function OverviewPage() {
             onBarClick={(star) => setRatingFilter(prev => prev === star ? null : star)}
           />
           <SentimentChart data={sentiment} />
+          
+          {/* Scatter Chart - spans 1 */}
           <ScatterChart 
             data={topProducts.filter(p => p.price && p.avg_rating && p.total_reviews).map(p => ({
               name: p.name, price: p.price, rating: p.avg_rating, reviews: p.total_reviews
             }))} 
           />
-          <TopProductsTable
-            products={topProducts
-              .filter(p => !ratingFilter || Math.round(p.avg_rating || 0) === ratingFilter)
-              .slice(0, 5)}
-            title={ratingFilter ? `Top 5 sản phẩm (${ratingFilter} Star)` : "Top 5 sản phẩm — Rating"}
-            onClickProduct={(p) => setSelectedProduct(p)}
-          />
+          
+          {/* Negative Topics - spans 1 */}
+          <NegativeTopics topics={negativeTopics} />
+
+          {/* Top Products Table - spans full width */}
+          <div className="lg:col-span-2">
+            <TopProductsTable
+              products={topProducts
+                .filter(p => !ratingFilter || Math.round(p.avg_rating || 0) === ratingFilter)
+                .slice(0, 5)}
+              title={ratingFilter ? `Top 5 sản phẩm (${ratingFilter} Star)` : "Top 5 sản phẩm — Rating"}
+              onClickProduct={(p) => setSelectedProduct(p)}
+            />
+          </div>
         </div>
       </div>
 

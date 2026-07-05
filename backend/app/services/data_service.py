@@ -11,6 +11,7 @@ from loguru import logger
 from backend.app.config import (
     GOLD_PRODUCT_METRICS_PATH,
     GOLD_SENTIMENT_PATH,
+    GOLD_NEGATIVE_TOPICS_PATH,
     SILVER_REVIEWS_PATH,
 )
 
@@ -50,6 +51,11 @@ class DataService:
             logger.info(f"  → Sentiment: {len(self.df_sentiment)} rows")
         else:
             logger.warning("  ⚠ Chưa có dữ liệu sentiment. Chạy: python -m ml.sentiment_analysis")
+
+        # Đọc Negative Topics
+        self.df_negative_topics = self._read_parquet_dir(GOLD_NEGATIVE_TOPICS_PATH)
+        if not self.df_negative_topics.empty:
+            logger.info(f"  → Negative Topics: {len(self.df_negative_topics)} topics")
 
         self._loaded = True
         logger.success("✅ Dữ liệu đã được load vào memory!")
@@ -245,6 +251,15 @@ class DataService:
 
         return distribution
 
+    def get_negative_topics(self) -> list[dict]:
+        """Lấy danh sách các chủ đề phàn nàn từ file negative_topics."""
+        df = self.df_negative_topics
+        if df.empty or "topic" not in df.columns or "count" not in df.columns:
+            return []
+        
+        # Sắp xếp theo count giảm dần và trả về list dict
+        df_sorted = df.sort_values(by="count", ascending=False).head(20)
+        return df_sorted.to_dict(orient="records")
 
 # Singleton instance
 data_service = DataService()
