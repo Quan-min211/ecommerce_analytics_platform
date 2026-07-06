@@ -7,8 +7,9 @@ import sys
 from pathlib import Path
 from loguru import logger
 from pyspark.sql.functions import (
-    col, avg, count, sum as spark_sum, when, round as spark_round, current_timestamp
+    col, avg, count, sum as spark_sum, when, round as spark_round, current_timestamp, row_number
 )
+from pyspark.sql.window import Window
 
 project_root = Path(__file__).resolve().parent.parent.parent
 if str(project_root) not in sys.path:
@@ -53,7 +54,18 @@ def create_product_metrics():
 
     # 2. Join với bảng Products
     # Sử dụng left_outer join để giữ lại tất cả sản phẩm, kể cả sản phẩm chưa có review
-    gold_df = df_products.join(reviews_agg, on="product_id", how="left_outer")
+    if "scraped_at" in df_products.columns:
+        latest_window = Window.partitionBy("product_id").orderBy(col("scraped_at").desc_nulls_last())
+        df_products_latest = (
+            df_products
+            .withColumn("_snapshot_rank", row_number().over(latest_window))
+            .filter(col("_snapshot_rank") == 1)
+            .drop("_snapshot_rank")
+        )
+    else:
+        df_products_latest = df_products.dropDuplicates(["product_id"])
+
+    gold_df = df_products_latest.join(reviews_agg, on="product_id", how="left_outer")
     
     # Xử lý null cho các sản phẩm không có review
     gold_df = gold_df.fillna({
@@ -77,7 +89,7 @@ def create_product_metrics():
     logger.info(f"Ghi Gold Product Metrics tới: {gold_metrics_path}")
     (
         gold_df.write
-        .format("delta")
+        .format("parquet")
         .mode("overwrite")
         .save(gold_metrics_path)
     )

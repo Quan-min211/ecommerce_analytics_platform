@@ -10,9 +10,9 @@ from loguru import logger
 
 from backend.app.config import (
     GOLD_PRODUCT_METRICS_PATH,
+    GOLD_PRICE_HISTORY_PATH,
     GOLD_SENTIMENT_PATH,
     GOLD_NEGATIVE_TOPICS_PATH,
-    SILVER_REVIEWS_PATH,
 )
 
 
@@ -42,7 +42,7 @@ class DataService:
         logger.info(f"  → Product Metrics: {len(self.df_product_metrics)} rows")
 
         # Đọc Silver Reviews (để có chi tiết review)
-        self.df_reviews = self._read_parquet_dir(SILVER_REVIEWS_PATH)
+        self.df_reviews = pd.DataFrame()
         logger.info(f"  → Reviews: {len(self.df_reviews)} rows")
 
         # Đọc Gold Sentiment (nếu đã chạy ML pipeline)
@@ -56,6 +56,11 @@ class DataService:
         self.df_negative_topics = self._read_parquet_dir(GOLD_NEGATIVE_TOPICS_PATH)
         if not self.df_negative_topics.empty:
             logger.info(f"  → Negative Topics: {len(self.df_negative_topics)} topics")
+
+        # Đọc Gold Price History cho phân tích time-series
+        self.df_price_history = self._read_parquet_dir(GOLD_PRICE_HISTORY_PATH)
+        if not self.df_price_history.empty:
+            logger.info(f"  → Price History: {len(self.df_price_history)} snapshots")
 
         self._loaded = True
         logger.success("✅ Dữ liệu đã được load vào memory!")
@@ -111,7 +116,7 @@ class DataService:
     def get_product_by_id(self, product_id: str) -> dict | None:
         """Lấy chi tiết 1 sản phẩm theo product_id."""
         df = self.df_product_metrics
-        matches = df[df["product_id"] == product_id]
+        matches = df[df["product_id"].astype(str) == str(product_id)]
         if matches.empty:
             return None
         row = matches.iloc[0]
@@ -260,6 +265,38 @@ class DataService:
         # Sắp xếp theo count giảm dần và trả về list dict
         df_sorted = df.sort_values(by="count", ascending=False).head(20)
         return df_sorted.to_dict(orient="records")
+
+    # === Price History Queries ===
+
+    def get_price_history_by_product(self, product_id: str) -> list[dict]:
+        """Lấy lịch sử giá của 1 sản phẩm từ Gold price_history."""
+        df = self.df_price_history
+        if df.empty or "product_id" not in df.columns:
+            return []
+
+        matches = df[df["product_id"].astype(str) == str(product_id)].copy()
+        if matches.empty:
+            return []
+
+        if "scraped_at" in matches.columns:
+            matches = matches.sort_values(by="scraped_at")
+        return matches.where(matches.notna(), None).to_dict(orient="records")
+
+    def get_price_volatility(self, limit: int = 20, suspicious_only: bool = False) -> list[dict]:
+        """Top sản phẩm có biến động giá mạnh nhất."""
+        df = self.df_price_history
+        if df.empty or "price_change_pct" not in df.columns:
+            return []
+
+        result = df.copy()
+        result = result[result["price_change_pct"].notna()]
+        if suspicious_only and "is_discount_suspicious" in result.columns:
+            result = result[result["is_discount_suspicious"] == True]
+
+        result = result.assign(_abs_change=result["price_change_pct"].abs())
+        result = result.sort_values(by="_abs_change", ascending=False).head(limit)
+        result = result.drop(columns=["_abs_change"], errors="ignore")
+        return result.where(result.notna(), None).to_dict(orient="records")
 
 # Singleton instance
 data_service = DataService()

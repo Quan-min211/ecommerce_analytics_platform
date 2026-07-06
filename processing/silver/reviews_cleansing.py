@@ -12,6 +12,7 @@ if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
 
 from processing.utils.spark_session import get_spark_session
+from processing.utils.data_quality import apply_review_quality_checks
 
 
 def clean_reviews():
@@ -43,6 +44,8 @@ def clean_reviews():
         
     # Thêm timestamp processing_time
     df_clean = df_clean.withColumn("processed_at", current_timestamp())
+    df_clean, dq_report = apply_review_quality_checks(df_clean)
+    logger.info(f"Data Quality Reviews: {dq_report}")
 
     # Đếm trước khi ghi (tránh đọc lại Delta sau khi write)
     row_count = df_clean.count()

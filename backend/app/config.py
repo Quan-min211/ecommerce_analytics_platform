@@ -11,6 +11,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 GOLD_PRODUCT_METRICS_PATH = PROJECT_ROOT / "data" / "gold" / "product_metrics"
 GOLD_SENTIMENT_PATH = PROJECT_ROOT / "data" / "gold" / "reviews_sentiment"
 GOLD_NEGATIVE_TOPICS_PATH = PROJECT_ROOT / "data" / "gold" / "negative_topics"
+GOLD_PRICE_HISTORY_PATH = PROJECT_ROOT / "data" / "gold" / "price_history"
 SILVER_PRODUCTS_PATH = PROJECT_ROOT / "data" / "silver" / "products"
 SILVER_REVIEWS_PATH = PROJECT_ROOT / "data" / "silver" / "reviews"
 

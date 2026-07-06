@@ -87,3 +87,27 @@ async def get_negative_topics():
     Dữ liệu được trích xuất bằng Machine Learning (Topic Modeling).
     """
     return data_service.get_negative_topics()
+
+
+@router.get("/price-history/{product_id}", summary="Lịch sử giá sản phẩm")
+async def get_price_history(product_id: str):
+    """
+    Trả về lịch sử giá của một sản phẩm từ Gold price_history.
+    Dùng để phát hiện tăng giá trước campaign hoặc giảm giá bất thường.
+    """
+    return {
+        "product_id": product_id,
+        "history": data_service.get_price_history_by_product(product_id),
+    }
+
+
+@router.get("/price-volatility", summary="Sản phẩm biến động giá mạnh")
+async def get_price_volatility(
+    limit: int = Query(20, ge=1, le=100, description="Số lượng snapshot trả về"),
+    suspicious_only: bool = Query(False, description="Chỉ lấy snapshot có dấu hiệu giảm giá đáng nghi"),
+):
+    """
+    Trả về các snapshot có biến động giá mạnh nhất.
+    Nếu suspicious_only=true, chỉ trả về các case giảm giá sâu đáng nghi.
+    """
+    return data_service.get_price_volatility(limit=limit, suspicious_only=suspicious_only)

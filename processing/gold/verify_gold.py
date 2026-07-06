@@ -18,7 +18,7 @@ def verify_gold_data():
     gold_metrics_path = str(project_root / "data" / "gold" / "product_metrics")
     
     print("\n--- ĐANG ĐỌC DỮ LIỆU TỪ GOLD LAYER ---")
-    df = spark.read.format("delta").load(gold_metrics_path)
+    df = spark.read.format("parquet").load(gold_metrics_path)
     
     print("\n--- TOP 5 SẢN PHẨM NHIỀU ĐÁNH GIÁ NHẤT ---")
     df.orderBy(df["total_reviews"].desc()).select(

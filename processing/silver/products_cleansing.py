@@ -13,6 +13,7 @@ if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
 
 from processing.utils.spark_session import get_spark_session
+from processing.utils.data_quality import apply_product_quality_checks
 
 
 def clean_products():
@@ -29,7 +30,8 @@ def clean_products():
         return
 
     # 1. Drop duplicates dựa trên product_id
-    df_clean = df.dropDuplicates(["product_id"])
+    dedupe_keys = ["product_id", "scraped_at"] if "scraped_at" in df.columns else ["product_id"]
+    df_clean = df.dropDuplicates(dedupe_keys)
     
     # 2. Xử lý các trường rỗng / chuẩn hóa kiểu
     # Ví dụ: đảm bảo price là số nguyên
@@ -45,6 +47,8 @@ def clean_products():
         
     # Thêm timestamp processing_time
     df_clean = df_clean.withColumn("processed_at", current_timestamp())
+    df_clean, dq_report = apply_product_quality_checks(df_clean)
+    logger.info(f"Data Quality Products: {dq_report}")
 
     # Đếm trước khi ghi (tránh đọc lại Delta sau khi write)
     row_count = df_clean.count()

@@ -21,7 +21,9 @@ from processing.bronze.json_to_bronze import run_bronze_ingestion
 from processing.silver.products_cleansing import clean_products
 from processing.silver.reviews_cleansing import clean_reviews
 from processing.gold.product_metrics import create_product_metrics
+from processing.gold.price_history import create_price_history
 from ml.sentiment_analysis import run_sentiment_analysis
+from ml.topic_modeling import run_topic_modeling
 
 app = FastAPI(title="Local Crawler Agent", port=8001)
 
@@ -53,9 +55,15 @@ def run_etl_pipeline():
         
         logger.info("==> Running Gold Transformation...")
         create_product_metrics()
+
+        logger.info("==> Running Gold Price History...")
+        create_price_history()
         
         logger.info("==> Running Sentiment Analysis...")
         run_sentiment_analysis()
+
+        logger.info("==> Running Negative Topic Modeling...")
+        run_topic_modeling()
         
         logger.info("✅ ETL Pipeline hoàn tất.")
     except Exception as e:

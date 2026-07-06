@@ -46,6 +46,14 @@ export async function getNegativeTopics() {
   return fetchAPI("/api/analytics/negative-topics");
 }
 
+export async function getPriceHistory(productId) {
+  return fetchAPI(`/api/analytics/price-history/${productId}`);
+}
+
+export async function getPriceVolatility({ limit = 20, suspiciousOnly = false } = {}) {
+  return fetchAPI(`/api/analytics/price-volatility?limit=${limit}&suspicious_only=${suspiciousOnly}`);
+}
+
 // === Products ===
 
 export async function getProducts({ page = 1, pageSize = 20, search = "", sortBy = "avg_rating", sortOrder = "desc" } = {}) {

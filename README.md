@@ -205,7 +205,39 @@ python -m processing.silver.reviews_cleansing
 
 # Step 4: Aggregate metrics into Gold Layer
 python -m processing.gold.product_metrics
+
+# Step 5: Build Gold price history for time-series tracking
+python -m processing.gold.price_history
 ```
+
+### Data Quality & Governance
+
+Silver jobs now apply data quality gates before writing trusted data:
+
+- Products with invalid identifiers, missing names, invalid ratings, or `price <= 0` are rejected.
+- Reviews with invalid identifiers or ratings are rejected.
+- Reviews with missing text are logged for ML governance.
+
+Rejected records are written to `data/quality/rejected/`, and JSON audit reports are written to `data/quality/reports/`.
+
+### Airflow Orchestration
+
+The Airflow DAG in `dags/ecommerce_daily_pipeline.py` schedules the production-style pipeline at `02:00` daily:
+
+```text
+scrape -> bronze -> silver products/reviews + DQ -> gold metrics
+       -> gold price history -> sentiment -> negative topics -> backend reload
+```
+
+Useful environment variables:
+
+| Variable | Purpose |
+|----------|---------|
+| `PROJECT_ROOT` | Path to the repository inside the Airflow worker. |
+| `PIPELINE_PYTHON` | Python executable used by the DAG. |
+| `PIPELINE_KEYWORD` | Shopee keyword for scheduled scraping. |
+| `ENABLE_SCRAPE` | Set to `true` only when Chrome CDP is available to Airflow. |
+| `BACKEND_RELOAD_URL` | Backend cache reload endpoint. |
 
 ### Running the ML Pipeline
 
@@ -262,6 +294,8 @@ Base URL: `http://localhost:8000`
 | GET | `/api/analytics/top-products` | Top N products by metric |
 | GET | `/api/analytics/rating-distribution` | Star rating distribution (1-5) |
 | GET | `/api/analytics/sentiment-overview` | Sentiment analysis summary |
+| GET | `/api/analytics/price-history/{product_id}` | Product price history over time |
+| GET | `/api/analytics/price-volatility` | Products with strongest price changes |
 | POST | `/api/reload` | Reload data from Gold Layer |
 
 Interactive API documentation is available at [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger UI).
