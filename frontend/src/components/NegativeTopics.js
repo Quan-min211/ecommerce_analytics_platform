@@ -44,7 +44,7 @@ export default function NegativeTopics({ topics = [] }) {
             <div key={idx} className="group">
               <div className="flex items-center justify-between text-sm mb-1">
                 <span className="text-slate-700 font-medium capitalize truncate pr-4">
-                  "{item.topic}"
+                  &ldquo;{item.topic}&rdquo;
                 </span>
                 <span className="text-slate-400 text-xs font-semibold shrink-0">
                   {item.count} lượt

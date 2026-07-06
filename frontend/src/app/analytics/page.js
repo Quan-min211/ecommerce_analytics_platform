@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
-import { getRatingDistribution, getTopProducts } from "@/lib/api";
+import { getPriceVolatility, getRatingDistribution, getTopProducts } from "@/lib/api";
 import RatingChart from "@/components/RatingChart";
 import ProductModal from "@/components/ProductModal";
 import ReviewsModal from "@/components/ReviewsModal";
+import PriceVolatilityTable from "@/components/PriceVolatilityTable";
 
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
@@ -27,6 +28,7 @@ export default function AnalyticsPage() {
   const [ratingDist, setRatingDist] = useState(null);
   const [topByRating, setTopByRating] = useState([]);
   const [topByReviews, setTopByReviews] = useState([]);
+  const [priceVolatility, setPriceVolatility] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -37,14 +39,16 @@ export default function AnalyticsPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [rd, tr, tv] = await Promise.all([
+        const [rd, tr, tv, pv] = await Promise.all([
           getRatingDistribution(),
           getTopProducts("avg_rating", 10),
           getTopProducts("total_reviews", 10),
+          getPriceVolatility({ limit: 10, suspiciousOnly: false }),
         ]);
         setRatingDist(rd);
         setTopByRating(tr);
         setTopByReviews(tv);
+        setPriceVolatility(pv);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -110,6 +114,11 @@ export default function AnalyticsPage() {
         </div>
 
         <RatingChart data={ratingDist} height={300} title="Phân bố đánh giá tổng thể" />
+
+        <PriceVolatilityTable
+          items={priceVolatility}
+          onClickProduct={(p) => setSelectedProduct(p)}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {/* Top by Rating */}

@@ -48,17 +48,33 @@ def _write_rejected(df: DataFrame, entity: str, reason: str) -> int:
     return count
 
 
+def _empty_like(df: DataFrame) -> DataFrame:
+    return df.limit(0)
+
+
+def _has_columns(df: DataFrame, *columns: str) -> bool:
+    return all(column in df.columns for column in columns)
+
+
 def apply_product_quality_checks(df: DataFrame) -> tuple[DataFrame, dict[str, Any]]:
     """Filter invalid product rows and persist a governance report."""
     input_rows = df.count()
 
-    invalid_price = df.filter(col("price").isNull() | (col("price") <= 0))
-    missing_product_id = df.filter(col("product_id").isNull())
-    missing_name = df.filter(col("name").isNull() | (length(trim(col("name"))) == 0))
+    invalid_price = (
+        df.filter(col("price").isNull() | (col("price") <= 0))
+        if _has_columns(df, "price")
+        else df
+    )
+    missing_product_id = df.filter(col("product_id").isNull()) if _has_columns(df, "product_id") else df
+    missing_name = (
+        df.filter(col("name").isNull() | (length(trim(col("name"))) == 0))
+        if _has_columns(df, "name")
+        else df
+    )
     invalid_rating = (
         df.filter((col("rating").isNotNull()) & ((col("rating") < 0) | (col("rating") > 5)))
         if "rating" in df.columns
-        else df.limit(0)
+        else _empty_like(df)
     )
 
     _write_rejected(invalid_price, "products", "invalid_price")
@@ -66,13 +82,18 @@ def apply_product_quality_checks(df: DataFrame) -> tuple[DataFrame, dict[str, An
     _write_rejected(missing_name, "products", "missing_name")
     _write_rejected(invalid_rating, "products", "invalid_rating")
 
-    valid_df = df.filter(
-        col("product_id").isNotNull()
-        & col("price").isNotNull()
-        & (col("price") > 0)
-        & col("name").isNotNull()
-        & (length(trim(col("name"))) > 0)
-    )
+    required_columns = ["product_id", "price", "name"]
+    if not _has_columns(df, *required_columns):
+        logger.error(f"Products missing required columns: {required_columns}")
+        valid_df = _empty_like(df)
+    else:
+        valid_df = df.filter(
+            col("product_id").isNotNull()
+            & col("price").isNotNull()
+            & (col("price") > 0)
+            & col("name").isNotNull()
+            & (length(trim(col("name"))) > 0)
+        )
     if "rating" in valid_df.columns:
         valid_df = valid_df.filter(
             col("rating").isNull() | ((col("rating") >= 0) & (col("rating") <= 5))
@@ -98,9 +119,13 @@ def apply_review_quality_checks(df: DataFrame) -> tuple[DataFrame, dict[str, Any
     """Filter invalid reviews and log reviews with missing text for ML governance."""
     input_rows = df.count()
 
-    missing_review_id = df.filter(col("review_id").isNull())
-    missing_product_id = df.filter(col("product_id").isNull())
-    invalid_rating = df.filter(col("rating").isNull() | (col("rating") < 1) | (col("rating") > 5))
+    missing_review_id = df.filter(col("review_id").isNull()) if _has_columns(df, "review_id") else df
+    missing_product_id = df.filter(col("product_id").isNull()) if _has_columns(df, "product_id") else df
+    invalid_rating = (
+        df.filter(col("rating").isNull() | (col("rating") < 1) | (col("rating") > 5))
+        if _has_columns(df, "rating")
+        else df
+    )
     missing_text = (
         df.filter(col("review_text").isNull() | (length(trim(col("review_text"))) == 0))
         if "review_text" in df.columns
@@ -112,13 +137,18 @@ def apply_review_quality_checks(df: DataFrame) -> tuple[DataFrame, dict[str, Any
     _write_rejected(invalid_rating, "reviews", "invalid_rating")
     _write_rejected(missing_text, "reviews", "missing_text")
 
-    valid_df = df.filter(
-        col("review_id").isNotNull()
-        & col("product_id").isNotNull()
-        & col("rating").isNotNull()
-        & (col("rating") >= 1)
-        & (col("rating") <= 5)
-    )
+    required_columns = ["review_id", "product_id", "rating"]
+    if not _has_columns(df, *required_columns):
+        logger.error(f"Reviews missing required columns: {required_columns}")
+        valid_df = _empty_like(df)
+    else:
+        valid_df = df.filter(
+            col("review_id").isNotNull()
+            & col("product_id").isNotNull()
+            & col("rating").isNotNull()
+            & (col("rating") >= 1)
+            & (col("rating") <= 5)
+        )
 
     valid_rows = valid_df.count()
     report = {

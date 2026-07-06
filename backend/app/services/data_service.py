@@ -43,7 +43,6 @@ class DataService:
 
         # Đọc Silver Reviews (để có chi tiết review)
         self.df_reviews = pd.DataFrame()
-        logger.info(f"  → Reviews: {len(self.df_reviews)} rows")
 
         # Đọc Gold Sentiment (nếu đã chạy ML pipeline)
         self.df_sentiment = self._read_parquet_dir(GOLD_SENTIMENT_PATH)
@@ -51,6 +50,9 @@ class DataService:
             logger.info(f"  → Sentiment: {len(self.df_sentiment)} rows")
         else:
             logger.warning("  ⚠ Chưa có dữ liệu sentiment. Chạy: python -m ml.sentiment_analysis")
+
+        self.df_reviews = self.df_sentiment.copy()
+        logger.info(f"  → Reviews: {len(self.df_reviews)} rows")
 
         # Đọc Negative Topics
         self.df_negative_topics = self._read_parquet_dir(GOLD_NEGATIVE_TOPICS_PATH)
