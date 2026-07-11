@@ -5,10 +5,14 @@ Entry point cho API server. Đọc dữ liệu từ Gold Layer (Parquet)
 bằng pandas khi khởi động, phục vụ qua REST API.
 """
 
+import uuid
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from loguru import logger
 from prometheus_fastapi_instrumentator import Instrumentator
 
@@ -70,3 +74,41 @@ async def reload_data():
     """Reload dữ liệu từ Gold Layer (gọi sau khi ETL pipeline chạy xong)."""
     data_service.reload_data()
     return {"status": "reloaded", "total_products": len(data_service.df_product_metrics)}
+
+
+# === Global Exception Handlers ===
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Trả về lỗi validation dạng JSON có cấu trúc rõ ràng."""
+    errors = []
+    for error in exc.errors():
+        errors.append({
+            "field": ".".join(str(loc) for loc in error.get("loc", [])),
+            "message": error.get("msg", ""),
+            "type": error.get("type", ""),
+        })
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": "Validation Error",
+            "detail": errors,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    """Bắt tất cả lỗi không xử lý được và trả về 500 có error_id."""
+    error_id = str(uuid.uuid4())[:8]
+    logger.error(f"[{error_id}] Unhandled error on {request.method} {request.url.path}: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal Server Error",
+            "error_id": error_id,
+            "message": "Có lỗi xảy ra phía server. Vui lòng thử lại sau.",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        },
+    )

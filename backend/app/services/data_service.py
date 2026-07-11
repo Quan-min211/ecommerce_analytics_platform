@@ -82,6 +82,22 @@ class DataService:
         dfs = [pd.read_parquet(f) for f in parquet_files]
         return pd.concat(dfs, ignore_index=True)
 
+    def _apply_filters(
+        self,
+        df: pd.DataFrame,
+        keyword: str = None,
+        min_price: float = None,
+        max_price: float = None,
+    ) -> pd.DataFrame:
+        """Áp dụng bộ lọc keyword và khoảng giá lên DataFrame."""
+        if keyword and "keyword" in df.columns:
+            df = df[df["keyword"].str.lower() == keyword.lower()]
+        if min_price is not None and "price" in df.columns:
+            df = df[df["price"] >= min_price]
+        if max_price is not None and "price" in df.columns:
+            df = df[df["price"] <= max_price]
+        return df
+
     # === Product Queries ===
 
     def get_products(
@@ -90,10 +106,16 @@ class DataService:
         page_size: int = 20,
         search: str = None,
         sort_by: str = "avg_rating",
-        sort_order: str = "desc"
+        sort_order: str = "desc",
+        keyword: str = None,
+        min_price: float = None,
+        max_price: float = None,
     ) -> tuple[list[dict], int]:
-        """Lấy danh sách sản phẩm có pagination, search, sort."""
+        """Lấy danh sách sản phẩm có pagination, search, sort, filter."""
         df = self.df_product_metrics.copy()
+
+        # Apply keyword + price filters
+        df = self._apply_filters(df, keyword=keyword, min_price=min_price, max_price=max_price)
 
         # Search theo tên sản phẩm
         if search:
@@ -126,13 +148,21 @@ class DataService:
 
     # === Analytics Queries ===
 
-    def get_overview(self) -> dict:
+    def get_overview(
+        self,
+        keyword: str = None,
+        min_price: float = None,
+        max_price: float = None,
+    ) -> dict:
         """Tổng quan: tổng sản phẩm, giá trung bình, rating trung bình."""
-        df = self.df_product_metrics
-        avg_rating = round(float(df["avg_rating"].mean()), 2) if "avg_rating" in df.columns else 0
+        df = self._apply_filters(
+            self.df_product_metrics.copy(),
+            keyword=keyword, min_price=min_price, max_price=max_price,
+        )
+        avg_rating = round(float(df["avg_rating"].mean()), 2) if "avg_rating" in df.columns and not df.empty else 0
         return {
             "total_products": int(len(df)),
-            "avg_price": round(float(df["price"].mean()), 0) if "price" in df.columns else 0,
+            "avg_price": round(float(df["price"].mean()), 0) if "price" in df.columns and not df.empty else 0,
             "avg_rating": avg_rating,
             "total_reviews": int(df["total_reviews"].sum()) if "total_reviews" in df.columns else 0,
             "total_keywords": int(df["keyword"].nunique()) if "keyword" in df.columns else 0,
@@ -182,10 +212,16 @@ class DataService:
     def get_top_products(
         self,
         metric: str = "avg_rating",
-        limit: int = 10
+        limit: int = 10,
+        keyword: str = None,
+        min_price: float = None,
+        max_price: float = None,
     ) -> list[dict]:
         """Top N sản phẩm theo metric (avg_rating, total_reviews, sold_count)."""
-        df = self.df_product_metrics.copy()
+        df = self._apply_filters(
+            self.df_product_metrics.copy(),
+            keyword=keyword, min_price=min_price, max_price=max_price,
+        )
 
         if metric not in df.columns:
             metric = "avg_rating"

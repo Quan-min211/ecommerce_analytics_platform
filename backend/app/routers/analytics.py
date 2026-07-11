@@ -3,6 +3,8 @@ Router cho Analytics API.
 Endpoints: GET /api/analytics/overview, /top-products, /rating-distribution
 """
 
+from typing import Optional
+
 from fastapi import APIRouter, Query
 
 from backend.app.models.schemas import AnalyticsOverview, RatingDistribution
@@ -12,15 +14,17 @@ router = APIRouter(prefix="/api/analytics", tags=["Analytics"])
 
 
 @router.get("/overview", response_model=AnalyticsOverview, summary="Tổng quan thống kê")
-async def get_overview():
+async def get_overview(
+    keyword: Optional[str] = Query(None, description="Lọc theo từ khóa đã cào"),
+    min_price: Optional[float] = Query(None, ge=0, description="Giá tối thiểu"),
+    max_price: Optional[float] = Query(None, ge=0, description="Giá tối đa"),
+):
     """
-    Trả về các chỉ số tổng quan:
-    - Tổng số sản phẩm
-    - Giá trung bình
-    - Điểm đánh giá trung bình
-    - Tổng số lượt đánh giá
+    Trả về các chỉ số tổng quan (có thể lọc theo keyword và khoảng giá).
     """
-    return data_service.get_overview()
+    return data_service.get_overview(
+        keyword=keyword, min_price=min_price, max_price=max_price,
+    )
 
 
 @router.get("/top-products", summary="Top sản phẩm")
@@ -30,16 +34,17 @@ async def get_top_products(
         description="Xếp hạng theo: avg_rating, total_reviews, sold_count"
     ),
     limit: int = Query(10, ge=1, le=50, description="Số lượng sản phẩm trả về"),
+    keyword: Optional[str] = Query(None, description="Lọc theo từ khóa"),
+    min_price: Optional[float] = Query(None, ge=0, description="Giá tối thiểu"),
+    max_price: Optional[float] = Query(None, ge=0, description="Giá tối đa"),
 ):
     """
-    Top N sản phẩm theo metric chọn.
-
-    Metrics:
-    - **avg_rating**: Điểm đánh giá trung bình cao nhất
-    - **total_reviews**: Nhiều lượt đánh giá nhất
-    - **sold_count**: Bán chạy nhất
+    Top N sản phẩm theo metric (có thể lọc theo keyword và khoảng giá).
     """
-    return data_service.get_top_products(metric=metric, limit=limit)
+    return data_service.get_top_products(
+        metric=metric, limit=limit,
+        keyword=keyword, min_price=min_price, max_price=max_price,
+    )
 
 
 @router.get(

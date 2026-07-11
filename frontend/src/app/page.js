@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Package, DollarSign, Star, MessageSquare, Hash, Tag, AlertTriangle } from "lucide-react";
 import KpiCard from "@/components/KpiCard";
 import RatingChart from "@/components/RatingChart";
@@ -38,51 +38,95 @@ export default function OverviewPage() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [reviewsTarget, setReviewsTarget] = useState(null);
 
+  // Filter state
+  const [filterKeyword, setFilterKeyword] = useState("");
+  const [filterPrice, setFilterPrice] = useState("all");
+  const [appliedFilters, setAppliedFilters] = useState({ keyword: null, min_price: null, max_price: null });
+
   const toggleKeyword = (kw) => {
     setSelectedKeywords((prev) =>
       prev.includes(kw) ? prev.filter((k) => k !== kw) : [...prev, kw]
     );
   };
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [ov, rd, tp, sm, ks, nt] = await Promise.all([
-          getOverview(),
-          getRatingDistribution(),
-          getTopProducts("avg_rating", 30),
-          getSentimentOverview(),
-          getKeywordStats(),
-          getNegativeTopics(),
-        ]);
-        setOverview(ov);
-        setRatingDist(rd);
-        setTopProducts(tp);
-        setSentiment(sm);
-        setKeywordStats(ks);
-        setNegativeTopics(nt);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+  const handleApplyFilter = () => {
+    const priceMap = {
+      all: { min_price: null, max_price: null },
+      under_100k: { min_price: null, max_price: 100000 },
+      "100k_500k": { min_price: 100000, max_price: 500000 },
+      over_500k: { min_price: 500000, max_price: null },
+    };
+    const priceRange = priceMap[filterPrice] || priceMap.all;
+    setAppliedFilters({
+      keyword: filterKeyword || null,
+      ...priceRange,
+    });
+  };
+
+  const handleResetFilter = () => {
+    setFilterKeyword("");
+    setFilterPrice("all");
+    setAppliedFilters({ keyword: null, min_price: null, max_price: null });
+  };
+
+  const hasActiveFilter = appliedFilters.keyword || appliedFilters.min_price !== null || appliedFilters.max_price !== null;
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [ov, rd, tp, sm, ks, nt] = await Promise.all([
+        getOverview(appliedFilters),
+        getRatingDistribution(),
+        getTopProducts("avg_rating", 30, appliedFilters),
+        getSentimentOverview(),
+        getKeywordStats(),
+        getNegativeTopics(),
+      ]);
+      setOverview(ov);
+      setRatingDist(rd);
+      setTopProducts(tp);
+      setSentiment(sm);
+      setKeywordStats(ks);
+      setNegativeTopics(nt);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
     }
+  }, [appliedFilters]);
+
+  useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   if (error) {
+    const isNetwork = error.isNetworkError;
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center space-y-4 animate-fade-in">
           <div className="w-20 h-20 mx-auto rounded-2xl bg-red-50 flex items-center justify-center">
             <AlertTriangle className="w-10 h-10 text-red-400" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900">Không thể kết nối API</h2>
+          <h2 className="text-xl font-bold text-slate-900">
+            {isNetwork ? "Không thể kết nối Backend" : "Lỗi tải dữ liệu"}
+          </h2>
           <p className="text-slate-500 text-sm max-w-md">
-            Hãy đảm bảo Backend API đang chạy tại{" "}
-            <code className="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg">localhost:8000</code>
+            {isNetwork ? (
+              <>Hãy đảm bảo Backend API đang chạy tại{" "}<code className="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg">localhost:8000</code></>
+            ) : (
+              error.message || "Có lỗi xảy ra khi tải dữ liệu."
+            )}
           </p>
-          <p className="text-xs text-red-400">{error}</p>
+          {error.errorId && (
+            <p className="text-xs text-slate-400">Error ID: {error.errorId}</p>
+          )}
+          <button
+            onClick={fetchData}
+            className="mt-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 transition-colors"
+          >
+            Thử lại
+          </button>
         </div>
       </div>
     );
@@ -123,29 +167,72 @@ export default function OverviewPage() {
         {/* Global Filter Bar */}
         <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4 flex-wrap">
+            {/* Keyword Filter */}
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-500 uppercase">Thời gian:</span>
-              <select className="bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-900">
-                <option>Tất cả thời gian</option>
-                <option>7 ngày qua</option>
-                <option>30 ngày qua</option>
+              <span className="text-xs font-semibold text-slate-500 uppercase">Từ khóa:</span>
+              <select
+                value={filterKeyword}
+                onChange={(e) => setFilterKeyword(e.target.value)}
+                className="bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
+              >
+                <option value="">Tất cả từ khóa</option>
+                {keywordStats.map((kw) => (
+                  <option key={kw.keyword} value={kw.keyword}>{kw.keyword} ({kw.total_products})</option>
+                ))}
               </select>
             </div>
             <div className="w-px h-5 bg-slate-200 hidden sm:block"></div>
+            {/* Price Filter */}
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-slate-500 uppercase">Khoảng giá:</span>
-              <select className="bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-900">
-                <option>Tất cả mức giá</option>
-                <option>Dưới 100k</option>
-                <option>100k - 500k</option>
-                <option>Trên 500k</option>
+              <select
+                value={filterPrice}
+                onChange={(e) => setFilterPrice(e.target.value)}
+                className="bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
+              >
+                <option value="all">Tất cả mức giá</option>
+                <option value="under_100k">Dưới 100k</option>
+                <option value="100k_500k">100k - 500k</option>
+                <option value="over_500k">Trên 500k</option>
               </select>
             </div>
           </div>
-          <button className="text-xs font-semibold text-white bg-slate-900 px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors">
-            Áp dụng bộ lọc
-          </button>
+          <div className="flex items-center gap-2">
+            {hasActiveFilter && (
+              <button
+                onClick={handleResetFilter}
+                className="text-xs font-semibold text-slate-500 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                Xóa bộ lọc
+              </button>
+            )}
+            <button
+              onClick={handleApplyFilter}
+              className="text-xs font-semibold text-white bg-slate-900 px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors"
+            >
+              Áp dụng bộ lọc
+            </button>
+          </div>
         </div>
+
+        {/* Active Filter Badge */}
+        {hasActiveFilter && (
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-slate-400">Bộ lọc đang áp dụng:</span>
+            {appliedFilters.keyword && (
+              <span className="bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full border border-emerald-200 font-medium">
+                {appliedFilters.keyword}
+              </span>
+            )}
+            {(appliedFilters.min_price !== null || appliedFilters.max_price !== null) && (
+              <span className="bg-sky-50 text-sky-600 px-2.5 py-1 rounded-full border border-sky-200 font-medium">
+                {appliedFilters.min_price && !appliedFilters.max_price ? `Từ ₫${appliedFilters.min_price.toLocaleString("vi-VN")}` :
+                 !appliedFilters.min_price && appliedFilters.max_price ? `Dưới ₫${appliedFilters.max_price.toLocaleString("vi-VN")}` :
+                 `₫${appliedFilters.min_price?.toLocaleString("vi-VN")} - ₫${appliedFilters.max_price?.toLocaleString("vi-VN")}`}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Tổng quan KPI */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 stagger-children">

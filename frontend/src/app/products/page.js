@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Search, ChevronLeft, ChevronRight, Star, ArrowUpDown, Eye, MessageSquare, Download, RefreshCw } from "lucide-react";
-import { getProducts } from "@/lib/api";
+import { Search, ChevronLeft, ChevronRight, Star, ArrowUpDown, Eye, MessageSquare, Download, RefreshCw, Filter } from "lucide-react";
+import { getProducts, getKeywordStats } from "@/lib/api";
 import ProductModal from "@/components/ProductModal";
 import ReviewsModal from "@/components/ReviewsModal";
 
@@ -37,6 +37,11 @@ export default function ProductsPage() {
   const [isCrawling, setIsCrawling] = useState(false);
   const [crawlStatus, setCrawlStatus] = useState("");
 
+  // Product filters
+  const [filterKeyword, setFilterKeyword] = useState("");
+  const [filterPrice, setFilterPrice] = useState("all");
+  const [keywordOptions, setKeywordOptions] = useState([]);
+
   const handleCrawl = async (limit) => {
     if (!crawlKeyword.trim()) return;
     setIsCrawling(true);
@@ -65,26 +70,46 @@ export default function ProductsPage() {
     }
   };
 
+  // Load keyword options for filter dropdown
+  useEffect(() => {
+    getKeywordStats().then((ks) => setKeywordOptions(ks)).catch(() => {});
+  }, []);
+
   useEffect(() => {
     let ignore = false;
     async function fetchData() {
       setLoading(true);
+      const priceMap = {
+        all: {},
+        under_100k: { maxPrice: 100000 },
+        "100k_500k": { minPrice: 100000, maxPrice: 500000 },
+        over_500k: { minPrice: 500000 },
+      };
+      const priceRange = priceMap[filterPrice] || {};
       try {
-        const result = await getProducts({ page, pageSize: 15, search, sortBy, sortOrder });
+        const result = await getProducts({
+          page,
+          pageSize: 15,
+          search,
+          sortBy,
+          sortOrder,
+          keyword: filterKeyword || null,
+          ...priceRange,
+        });
         if (!ignore) {
           setData(result);
           setLoading(false);
         }
       } catch (err) {
         if (!ignore) {
-          setError(err.message);
+          setError(err.message || "Lỗi tải dữ liệu");
           setLoading(false);
         }
       }
     }
     fetchData();
     return () => { ignore = true; };
-  }, [page, search, sortBy, sortOrder]);
+  }, [page, search, sortBy, sortOrder, filterKeyword, filterPrice]);
 
   useEffect(() => {
     const timer = setTimeout(() => setPage(1), 300);
@@ -135,6 +160,28 @@ export default function ProductsPage() {
                 className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all shadow-inner"
               />
             </div>
+
+            {/* Keyword + Price Filters */}
+            <select
+              value={filterKeyword}
+              onChange={(e) => { setFilterKeyword(e.target.value); setPage(1); }}
+              className="bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
+            >
+              <option value="">Tất cả từ khóa</option>
+              {keywordOptions.map((kw) => (
+                <option key={kw.keyword} value={kw.keyword}>{kw.keyword}</option>
+              ))}
+            </select>
+            <select
+              value={filterPrice}
+              onChange={(e) => { setFilterPrice(e.target.value); setPage(1); }}
+              className="bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
+            >
+              <option value="all">Tất cả giá</option>
+              <option value="under_100k">Dưới 100k</option>
+              <option value="100k_500k">100k - 500k</option>
+              <option value="over_500k">Trên 500k</option>
+            </select>
             
             <div className="hidden sm:block w-px h-8 bg-slate-200 mx-2"></div>
 

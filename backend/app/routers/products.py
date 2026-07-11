@@ -4,6 +4,7 @@ Endpoints: GET /api/products, GET /api/products/{product_id}
 """
 
 import math
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -20,11 +21,14 @@ async def list_products(
     page_size: int = Query(
         DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE, description="Số sản phẩm mỗi trang"
     ),
-    search: str = Query(None, description="Tìm kiếm theo tên sản phẩm"),
+    search: Optional[str] = Query(None, description="Tìm kiếm theo tên sản phẩm"),
     sort_by: str = Query(
         "avg_rating", description="Sắp xếp theo: avg_rating, price, total_reviews, sold_count"
     ),
     sort_order: str = Query("desc", description="Thứ tự: asc hoặc desc"),
+    keyword: Optional[str] = Query(None, description="Lọc theo từ khóa đã cào"),
+    min_price: Optional[float] = Query(None, ge=0, description="Giá tối thiểu"),
+    max_price: Optional[float] = Query(None, ge=0, description="Giá tối đa"),
 ):
     """
     Lấy danh sách sản phẩm từ Gold Layer.
@@ -33,6 +37,7 @@ async def list_products(
     - **Phân trang** (page, page_size)
     - **Tìm kiếm** theo tên sản phẩm (search)
     - **Sắp xếp** theo nhiều tiêu chí (sort_by, sort_order)
+    - **Lọc** theo từ khóa và khoảng giá (keyword, min_price, max_price)
     """
     records, total = data_service.get_products(
         page=page,
@@ -40,6 +45,9 @@ async def list_products(
         search=search,
         sort_by=sort_by,
         sort_order=sort_order,
+        keyword=keyword,
+        min_price=min_price,
+        max_price=max_price,
     )
 
     total_pages = math.ceil(total / page_size) if total > 0 else 0
