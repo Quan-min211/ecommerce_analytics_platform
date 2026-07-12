@@ -5,7 +5,7 @@ Endpoints: GET /api/analytics/overview, /top-products, /rating-distribution
 
 from typing import Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Response
 
 from backend.app.models.schemas import AnalyticsOverview, RatingDistribution
 from backend.app.services.data_service import data_service
@@ -15,13 +15,16 @@ router = APIRouter(prefix="/api/analytics", tags=["Analytics"])
 
 @router.get("/overview", response_model=AnalyticsOverview, summary="Tổng quan thống kê")
 async def get_overview(
+    response: Response,
     keyword: Optional[str] = Query(None, description="Lọc theo từ khóa đã cào"),
     min_price: Optional[float] = Query(None, ge=0, description="Giá tối thiểu"),
     max_price: Optional[float] = Query(None, ge=0, description="Giá tối đa"),
 ):
     """
     Trả về các chỉ số tổng quan (có thể lọc theo keyword và khoảng giá).
+    Cache 2 phút — dữ liệu ít thay đổi.
     """
+    response.headers["Cache-Control"] = "public, max-age=120, stale-while-revalidate=60"
     return data_service.get_overview(
         keyword=keyword, min_price=min_price, max_price=max_price,
     )
@@ -29,6 +32,7 @@ async def get_overview(
 
 @router.get("/top-products", summary="Top sản phẩm")
 async def get_top_products(
+    response: Response,
     metric: str = Query(
         "avg_rating",
         description="Xếp hạng theo: avg_rating, total_reviews, sold_count"
@@ -40,7 +44,9 @@ async def get_top_products(
 ):
     """
     Top N sản phẩm theo metric (có thể lọc theo keyword và khoảng giá).
+    Cache 2 phút — dữ liệu ít thay đổi.
     """
+    response.headers["Cache-Control"] = "public, max-age=120, stale-while-revalidate=60"
     return data_service.get_top_products(
         metric=metric, limit=limit,
         keyword=keyword, min_price=min_price, max_price=max_price,
@@ -52,45 +58,42 @@ async def get_top_products(
     response_model=RatingDistribution,
     summary="Phân bố đánh giá"
 )
-async def get_rating_distribution():
+async def get_rating_distribution(response: Response):
     """
     Phân bố đánh giá theo số sao (1-5) trên toàn bộ sản phẩm.
-    Dùng để vẽ biểu đồ cột (bar chart) trên dashboard.
+    Cache 10 phút — dữ liệu tĩnh, ít thay đổi.
     """
+    response.headers["Cache-Control"] = "public, max-age=600, stale-while-revalidate=120"
     return data_service.get_rating_distribution()
 
 
 @router.get("/sentiment-overview", summary="Tổng quan cảm xúc")
-async def get_sentiment_overview():
+async def get_sentiment_overview(response: Response):
     """
-    Thống kê cảm xúc review (NLP Sentiment Analysis):
-    - Số lượng và tỷ lệ % review **tích cực** (positive)
-    - Số lượng và tỷ lệ % review **tiêu cực** (negative)
-    - Số lượng và tỷ lệ % review **trung lập** (neutral)
+    Thống kê cảm xúc review (NLP Sentiment Analysis).
+    Cache 5 phút — chỉ thay đổi sau khi chạy lại ML pipeline.
     """
+    response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
     return data_service.get_sentiment_overview()
 
 
 @router.get("/keyword-stats", summary="Thống kê theo từ khóa")
-async def get_keyword_stats():
+async def get_keyword_stats(response: Response):
     """
-    Trả về thống kê chi tiết cho từng từ khóa đã cào:
-    - Tên keyword
-    - Số lượng sản phẩm
-    - Giá trung bình
-    - Rating trung bình
-    - Tổng số đánh giá
-    - Phân bố rating (1-5 sao)
+    Thống kê chi tiết cho từng từ khóa đã cào.
+    Cache 5 phút — chỉ thay đổi sau khi có lượt cào dữ liệu mới.
     """
+    response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
     return data_service.get_keyword_stats()
 
 
 @router.get("/negative-topics", summary="Chủ đề đánh giá tiêu cực")
-async def get_negative_topics():
+async def get_negative_topics(response: Response):
     """
-    Trả về danh sách các cụm từ (n-grams) xuất hiện nhiều nhất trong các đánh giá tiêu cực.
-    Dữ liệu được trích xuất bằng Machine Learning (Topic Modeling).
+    Top cụm từ phàn nàn nhiều nhất (NLP Topic Modeling).
+    Cache 10 phút — chỉ thay đổi sau khi chạy lại topic_modeling.py.
     """
+    response.headers["Cache-Control"] = "public, max-age=600, stale-while-revalidate=120"
     return data_service.get_negative_topics()
 
 
