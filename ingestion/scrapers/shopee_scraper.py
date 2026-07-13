@@ -13,6 +13,7 @@ Cách dùng:
         products = scraper.scrape_products("bàn phím cơ", max_pages=2)
 """
 
+import random
 import time
 import threading
 from typing import Any, Optional
@@ -53,6 +54,11 @@ class ShopeeScraper(BaseScraper):
         settings = get_settings()
         self.cdp_url = cdp_url or settings.CHROME_CDP_URL
         self.request_delay = request_delay or settings.REQUEST_DELAY_SECONDS
+
+        # Retry & backoff settings
+        self.max_retries: int = 3
+        self.api_wait_timeout: int = 20  # seconds to wait for API response
+        self._consecutive_failures: int = 0
 
         # Playwright instances
         self._playwright = None
@@ -153,8 +159,120 @@ class ShopeeScraper(BaseScraper):
         except Exception as e:
             self.logger.debug(f"Không thể parse ratings response: {e}")
 
+    def _wait_for_antibot(self, page: Page, max_wait: int = 90, check_interval: int = 3) -> bool:
+        """Smart anti-bot wait: poll cho đến khi phát hiện trang đã load xong.
+
+        Thay vì chờ cứng 60 giây, kiểm tra mỗi `check_interval` giây xem
+        search bar hoặc product grid đã xuất hiện chưa.
+
+        Args:
+            page: Playwright page instance
+            max_wait: Thời gian chờ tối đa (giây)
+            check_interval: Khoảng cách giữa mỗi lần kiểm tra (giây)
+
+        Returns:
+            True nếu trang đã sẵn sàng, False nếu hết thời gian chờ.
+        """
+        # Các selector cho biết trang đã qua anti-bot
+        ready_selectors = [
+            "input.shopee-searchbar-input__input",  # Search bar
+            ".shopee-search-item-result__items",     # Product grid
+            "[data-sqe='item']",                     # Product cards
+        ]
+
+        self.logger.info(f"🛡️ Chờ anti-bot/CAPTCHA (tối đa {max_wait}s, kiểm tra mỗi {check_interval}s)...")
+        elapsed = 0
+
+        while elapsed < max_wait:
+            for selector in ready_selectors:
+                try:
+                    if page.query_selector(selector):
+                        self.logger.success(f"✅ Trang đã sẵn sàng (phát hiện: {selector}) sau {elapsed}s")
+                        return True
+                except Exception:
+                    pass
+
+            page.wait_for_timeout(check_interval * 1000)
+            elapsed += check_interval
+
+            if elapsed % 15 == 0:
+                self.logger.info(f"⏳ Vẫn đang chờ anti-bot... ({elapsed}/{max_wait}s)")
+
+        self.logger.warning(f"⚠️ Hết thời gian chờ anti-bot ({max_wait}s). Tiếp tục dù có thể chưa sẵn sàng.")
+        return False
+
+    def _get_adaptive_delay(self, base_delay: float) -> float:
+        """Tính delay thích ứng dựa trên số lần thất bại liên tiếp.
+
+        Exponential backoff với jitter để tránh pattern detection:
+        - 0 failures: base_delay (e.g. 2s)
+        - 1 failure:  base_delay * 2 + jitter (e.g. 4-5s)
+        - 2 failures: base_delay * 4 + jitter (e.g. 8-10s)
+        - 3+ failures: cap tại base_delay * 8 + jitter (e.g. 16-20s)
+        """
+        multiplier = min(2 ** self._consecutive_failures, 8)
+        jitter = random.uniform(0, base_delay * 0.5)
+        delay = base_delay * multiplier + jitter
+        return round(delay, 1)
+
+    def _navigate_with_retry(
+        self, page: Page, url: str, page_num: int, max_retries: int = None
+    ) -> bool:
+        """Navigate tới URL với retry logic.
+
+        Nếu API response không tới trong thời gian chờ, retry với
+        exponential backoff. Mỗi lần retry reload lại trang.
+
+        Args:
+            page: Playwright page
+            url: URL cần navigate
+            page_num: Số trang hiện tại (để log)
+            max_retries: Số lần retry tối đa
+
+        Returns:
+            True nếu nhận được data, False nếu hết retry.
+        """
+        retries = max_retries if max_retries is not None else self.max_retries
+
+        for attempt in range(retries + 1):
+            self._data_received.clear()
+
+            try:
+                if attempt > 0:
+                    retry_delay = self._get_adaptive_delay(self.request_delay)
+                    self.logger.info(
+                        f"🔄 Retry {attempt}/{retries} cho trang {page_num + 1} "
+                        f"(chờ {retry_delay}s trước khi thử lại)..."
+                    )
+                    time.sleep(retry_delay)
+                    page.reload(wait_until="domcontentloaded", timeout=30000)
+                else:
+                    page.goto(url, wait_until="domcontentloaded", timeout=30000)
+
+                # Chờ API response
+                self._data_received.wait(timeout=self.api_wait_timeout)
+
+                if self._data_received.is_set():
+                    self._consecutive_failures = 0  # Reset on success
+                    return True
+
+                self.logger.warning(
+                    f"⏳ Timeout chờ API response trang {page_num + 1} "
+                    f"(attempt {attempt + 1}/{retries + 1})"
+                )
+                self._consecutive_failures += 1
+
+            except Exception as e:
+                self.logger.error(f"❌ Lỗi navigate trang {page_num + 1} (attempt {attempt + 1}): {e}")
+                self._consecutive_failures += 1
+
+        self.logger.error(f"❌ Đã hết {retries} lần retry cho trang {page_num + 1}. Bỏ qua trang này.")
+        return False
+
     def scrape_products(self, keyword: str, max_pages: int = 1) -> list[dict[str, Any]]:
         """Thu thập sản phẩm theo keyword từ Shopee.
+
+        Có retry logic, exponential backoff, và smart anti-bot wait.
 
         Args:
             keyword: Từ khóa tìm kiếm (VD: "bàn phím cơ")
@@ -168,8 +286,9 @@ class ShopeeScraper(BaseScraper):
 
         self.logger.info(f"🔍 Bắt đầu scrape: keyword='{keyword}', max_pages={max_pages}")
 
-        # Reset collection buffer
+        # Reset collection buffer & failure counter
         self._collected_items = []
+        self._consecutive_failures = 0
 
         context = self._browser.contexts[0]
         # Sử dụng tab có sẵn đầu tiên, hoặc tạo mới nếu chưa có
@@ -182,11 +301,7 @@ class ShopeeScraper(BaseScraper):
         )
 
         for page_num in range(max_pages):
-            self._data_received.clear()
-
             # Build search URL với pagination
-            # Shopee dùng offset: page 0 → newest=0, page 1 → newest=60, ...
-            offset = page_num * 60
             search_url = (
                 f"https://shopee.vn/search?keyword={quote(keyword)}"
                 f"&page={page_num}"
@@ -199,33 +314,32 @@ class ShopeeScraper(BaseScraper):
             try:
                 if page_num == 0:
                     self.logger.info("👉 Mô phỏng thao tác người dùng: Vào trang chủ và nhập từ khóa tìm kiếm...")
-                    # Vào trang chủ
                     page.goto("https://shopee.vn/", wait_until="domcontentloaded", timeout=60000)
-                    
-                    self.logger.info("⏳ Đang dừng 60 giây để bạn xử lý Anti-bot hoặc Đăng nhập Shopee...")
-                    page.wait_for_timeout(60000)
-                    
+
+                    # Smart anti-bot wait: poll thay vì chờ cứng
+                    self._wait_for_antibot(page, max_wait=90)
+
                     try:
-                        # Chờ ô tìm kiếm xuất hiện (thường là input có class shopee-searchbar-input__input)
                         page.wait_for_selector("input.shopee-searchbar-input__input", timeout=10000)
-                        # Gõ từ khóa vào
                         page.fill("input.shopee-searchbar-input__input", keyword)
-                        # Nhấn Enter để bắt đầu tìm kiếm
                         page.press("input.shopee-searchbar-input__input", "Enter")
-                        
-                        self.logger.info("⏳ Đang dừng thêm 60 giây để bạn gỡ Anti-bot sau khi tìm kiếm...")
-                        page.wait_for_timeout(60000)
+
+                        # Smart wait sau khi search: chờ product grid xuất hiện
+                        self._wait_for_antibot(page, max_wait=90)
                     except Exception as e:
                         self.logger.warning(f"⚠️ Không tìm thấy ô tìm kiếm, chuyển qua URL tĩnh... {e}")
-                        page.goto(search_url, wait_until="domcontentloaded", timeout=30000)
+                        self._navigate_with_retry(page, search_url, page_num)
+
+                    # Chờ API response cho trang đầu tiên
+                    self._data_received.wait(timeout=self.api_wait_timeout)
+                    if self._data_received.is_set():
+                        self._consecutive_failures = 0
+                    else:
+                        self._consecutive_failures += 1
+                        self.logger.warning("⏳ Không nhận được API response cho trang đầu tiên")
                 else:
-                    page.goto(search_url, wait_until="domcontentloaded", timeout=30000)
-
-                # Chờ API response trả về (tối đa 15 giây)
-                self._data_received.wait(timeout=15)
-
-                if not self._data_received.is_set():
-                    self.logger.warning(f"⏳ Timeout chờ API response trang {page_num + 1}")
+                    # Trang 2+: navigate với retry logic
+                    self._navigate_with_retry(page, search_url, page_num)
 
                 # Scroll xuống để trigger thêm API calls (lazy loading)
                 self._scroll_page(page)
@@ -235,12 +349,13 @@ class ShopeeScraper(BaseScraper):
 
             except Exception as e:
                 self.logger.error(f"❌ Lỗi trang {page_num + 1}: {e}")
-            # Bỏ page.close() để tái sử dụng tab này cho các trang tiếp theo
+                self._consecutive_failures += 1
 
-            # Rate limiting giữa các pages
+            # Adaptive delay giữa các pages (exponential backoff)
             if page_num < max_pages - 1:
-                self.logger.debug(f"⏱️ Delay {self.request_delay}s trước trang tiếp...")
-                time.sleep(self.request_delay)
+                delay = self._get_adaptive_delay(self.request_delay)
+                self.logger.debug(f"⏱️ Adaptive delay {delay}s trước trang tiếp (failures={self._consecutive_failures})...")
+                time.sleep(delay)
 
         self.logger.success(
             f"✅ Hoàn tất scrape '{keyword}': {len(self._collected_items)} sản phẩm"

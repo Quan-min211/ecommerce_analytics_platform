@@ -71,7 +71,10 @@ def setup_logging(log_level: str = "INFO", log_dir: str = "./logs") -> None:
 
 
 def cmd_scrape(args: argparse.Namespace) -> None:
-    """Thực thi lệnh scrape."""
+    """Thực thi lệnh scrape — với checkpoint sau mỗi keyword."""
+    import json
+    from datetime import datetime, timezone
+
     from ingestion.scrapers.shopee_scraper import ShopeeScraper
     from ingestion.writers.jsonl_writer import JsonlWriter
 
@@ -114,32 +117,94 @@ def cmd_scrape(args: argparse.Namespace) -> None:
 
     max_reviews = args.max_reviews if args.max_reviews else settings.MAX_REVIEWS_PER_PRODUCT
 
-    # Run scraper
+    # === Crawl report tracking ===
+    crawl_report = {
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "keywords_total": len(keywords),
+        "keywords_completed": [],
+        "keywords_failed": [],
+        "total_products": 0,
+        "total_reviews": 0,
+    }
+
+    # Run scraper with checkpoint after each keyword
     with ShopeeScraper() as scraper:
-        if len(keywords) == 1:
-            kw = keywords[0]
-            if args.with_reviews:
-                products, reviews = scraper.scrape_products_with_reviews(
-                    kw, max_pages=max_pages, max_reviews=max_reviews
-                )
-                if reviews:
-                    rev_path = review_writer.write(reviews, keyword=f"{kw}_reviews")
-                    logger.success(f"📁 Reviews Output: {rev_path}")
-            else:
-                products = scraper.scrape_products(kw, max_pages=max_pages)
-                
-            if products:
-                output_path = product_writer.write(products, keyword=kw)
-                logger.success(f"📁 Products Output: {output_path}")
-            else:
-                logger.warning("⚠️ Không thu thập được sản phẩm nào")
-        else:
-            if args.with_reviews:
-                logger.error("❌ Hiện tại --with-reviews chỉ hỗ trợ 1 keyword mỗi lần chạy.")
-                sys.exit(1)
-            results = scraper.scrape_multiple_keywords(keywords, max_pages=max_pages)
-            output_files = product_writer.write_multiple(results)
-            logger.success(f"📁 Đã ghi {len(output_files)} files products")
+        for i, kw in enumerate(keywords, 1):
+            logger.info(f"📋 [{i}/{len(keywords)}] Keyword: '{kw}'")
+            kw_start = datetime.now(timezone.utc)
+            kw_products = 0
+            kw_reviews = 0
+
+            try:
+                if args.with_reviews:
+                    products, reviews = scraper.scrape_products_with_reviews(
+                        kw, max_pages=max_pages, max_reviews=max_reviews
+                    )
+                    if reviews:
+                        rev_path = review_writer.write(reviews, keyword=f"{kw}_reviews")
+                        logger.success(f"📁 Reviews checkpoint saved: {rev_path}")
+                        kw_reviews = len(reviews)
+                else:
+                    products = scraper.scrape_products(kw, max_pages=max_pages)
+
+                # === CHECKPOINT: Ghi ngay sau mỗi keyword ===
+                if products:
+                    output_path = product_writer.write(products, keyword=kw)
+                    kw_products = len(products)
+                    logger.success(
+                        f"💾 Checkpoint saved: {kw_products} products → {output_path}"
+                    )
+                else:
+                    logger.warning(f"⚠️ Không thu thập được sản phẩm nào cho '{kw}'")
+
+                crawl_report["keywords_completed"].append({
+                    "keyword": kw,
+                    "products": kw_products,
+                    "reviews": kw_reviews,
+                    "duration_seconds": round(
+                        (datetime.now(timezone.utc) - kw_start).total_seconds(), 1
+                    ),
+                })
+                crawl_report["total_products"] += kw_products
+                crawl_report["total_reviews"] += kw_reviews
+
+            except Exception as e:
+                logger.error(f"❌ Lỗi nghiêm trọng khi cào keyword '{kw}': {e}")
+                crawl_report["keywords_failed"].append({
+                    "keyword": kw,
+                    "error": str(e),
+                })
+                # Tiếp tục keyword tiếp theo thay vì crash toàn bộ
+                continue
+
+    # === Ghi crawl report ===
+    crawl_report["finished_at"] = datetime.now(timezone.utc).isoformat()
+    crawl_report["status"] = (
+        "completed" if not crawl_report["keywords_failed"]
+        else "partial" if crawl_report["keywords_completed"]
+        else "failed"
+    )
+
+    report_dir = Path(settings.DATA_DIR) / "reports"
+    report_dir.mkdir(parents=True, exist_ok=True)
+    report_file = report_dir / f"crawl_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+
+    report_file.write_text(
+        json.dumps(crawl_report, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+    # Log summary
+    logger.info("━" * 50)
+    logger.info("📊 CRAWL REPORT SUMMARY")
+    logger.info(f"   Status:     {crawl_report['status'].upper()}")
+    logger.info(f"   Completed:  {len(crawl_report['keywords_completed'])}/{len(keywords)} keywords")
+    logger.info(f"   Products:   {crawl_report['total_products']}")
+    logger.info(f"   Reviews:    {crawl_report['total_reviews']}")
+    if crawl_report["keywords_failed"]:
+        logger.warning(f"   Failed:     {[kf['keyword'] for kf in crawl_report['keywords_failed']]}")
+    logger.info(f"   Report:     {report_file}")
+    logger.info("━" * 50)
 
     logger.info("🏁 Hoàn tất!")
 
