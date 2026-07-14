@@ -100,6 +100,15 @@ export async function getNegativeTopics() {
   return fetchAPI("/api/analytics/negative-topics");
 }
 
+export async function getPriceVolatility(limit = 20, suspiciousOnly = false) {
+  const query = buildQuery({ limit, suspicious_only: suspiciousOnly });
+  return fetchAPI(`/api/analytics/price-volatility${query}`);
+}
+
+export async function getPriceHistory(productId) {
+  return fetchAPI(`/api/analytics/price-history/${productId}`);
+}
+
 // === Products ===
 
 export async function getProducts({
