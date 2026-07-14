@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { FileQuestion, Home } from "lucide-react";
 
 export default function NotFound() {
@@ -12,13 +13,13 @@ export default function NotFound() {
         <p className="text-slate-500 text-sm leading-relaxed">
           Đường dẫn bạn truy cập không tồn tại hoặc đã bị di chuyển. Hãy kiểm tra lại URL hoặc quay về Dashboard.
         </p>
-        <a
+        <Link
           href="/"
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20"
         >
           <Home className="w-4 h-4" />
           Về Dashboard
-        </a>
+        </Link>
       </div>
     </div>
   );

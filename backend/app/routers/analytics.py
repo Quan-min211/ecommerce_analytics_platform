@@ -112,7 +112,9 @@ async def get_price_history(product_id: str):
 @router.get("/price-volatility", summary="Sản phẩm biến động giá mạnh")
 async def get_price_volatility(
     limit: int = Query(20, ge=1, le=100, description="Số lượng snapshot trả về"),
-    suspicious_only: bool = Query(False, description="Chỉ lấy snapshot có dấu hiệu giảm giá đáng nghi"),
+    suspicious_only: bool = Query(
+        False, description="Chỉ lấy snapshot có dấu hiệu giảm giá đáng nghi"
+    ),
 ):
     """
     Trả về các snapshot có biến động giá mạnh nhất.

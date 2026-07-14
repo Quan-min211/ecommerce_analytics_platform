@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Package, DollarSign, Star, MessageSquare, Hash, Tag, AlertTriangle } from "lucide-react";
 import KpiCard from "@/components/KpiCard";
 import RatingChart from "@/components/RatingChart";
@@ -71,34 +71,43 @@ export default function OverviewPage() {
 
   const hasActiveFilter = appliedFilters.keyword || appliedFilters.min_price !== null || appliedFilters.max_price !== null;
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [ov, rd, tp, sm, ks, nt] = await Promise.all([
-        getOverview(appliedFilters),
-        getRatingDistribution(),
-        getTopProducts("avg_rating", 30, appliedFilters),
-        getSentimentOverview(),
-        getKeywordStats(),
-        getNegativeTopics(),
-      ]);
-      setOverview(ov);
-      setRatingDist(rd);
-      setTopProducts(tp);
-      setSentiment(sm);
-      setKeywordStats(ks);
-      setNegativeTopics(nt);
-    } catch (err) {
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [appliedFilters]);
+  // Retry trigger — incrementing this causes the effect to re-run
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const handleRetry = () => setRefreshTrigger((n) => n + 1);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const [ov, rd, tp, sm, ks, nt] = await Promise.all([
+          getOverview(appliedFilters),
+          getRatingDistribution(),
+          getTopProducts("avg_rating", 30, appliedFilters),
+          getSentimentOverview(),
+          getKeywordStats(),
+          getNegativeTopics(),
+        ]);
+        if (!cancelled) {
+          setOverview(ov);
+          setRatingDist(rd);
+          setTopProducts(tp);
+          setSentiment(sm);
+          setKeywordStats(ks);
+          setNegativeTopics(nt);
+        }
+      } catch (err) {
+        if (!cancelled) setError(err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, [appliedFilters, refreshTrigger]);
 
   if (error) {
     const isNetwork = error.isNetworkError;
@@ -122,7 +131,7 @@ export default function OverviewPage() {
             <p className="text-xs text-slate-400">Error ID: {error.errorId}</p>
           )}
           <button
-            onClick={fetchData}
+            onClick={handleRetry}
             className="mt-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 transition-colors"
           >
             Thử lại

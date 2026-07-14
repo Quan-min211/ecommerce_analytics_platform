@@ -9,10 +9,10 @@ import pandas as pd
 from loguru import logger
 
 from backend.app.config import (
-    GOLD_PRODUCT_METRICS_PATH,
-    GOLD_PRICE_HISTORY_PATH,
-    GOLD_SENTIMENT_PATH,
     GOLD_NEGATIVE_TOPICS_PATH,
+    GOLD_PRICE_HISTORY_PATH,
+    GOLD_PRODUCT_METRICS_PATH,
+    GOLD_SENTIMENT_PATH,
 )
 
 
@@ -159,10 +159,18 @@ class DataService:
             self.df_product_metrics.copy(),
             keyword=keyword, min_price=min_price, max_price=max_price,
         )
-        avg_rating = round(float(df["avg_rating"].mean()), 2) if "avg_rating" in df.columns and not df.empty else 0
+        avg_rating = (
+            round(float(df["avg_rating"].mean()), 2)
+            if "avg_rating" in df.columns and not df.empty
+            else 0
+        )
         return {
             "total_products": int(len(df)),
-            "avg_price": round(float(df["price"].mean()), 0) if "price" in df.columns and not df.empty else 0,
+            "avg_price": (
+                round(float(df["price"].mean()), 0)
+                if "price" in df.columns and not df.empty
+                else 0
+            ),
             "avg_rating": avg_rating,
             "total_reviews": int(df["total_reviews"].sum()) if "total_reviews" in df.columns else 0,
             "total_keywords": int(df["keyword"].nunique()) if "keyword" in df.columns else 0,
@@ -299,7 +307,7 @@ class DataService:
         df = self.df_negative_topics
         if df.empty or "topic" not in df.columns or "count" not in df.columns:
             return []
-        
+
         # Sắp xếp theo count giảm dần và trả về list dict
         df_sorted = df.sort_values(by="count", ascending=False).head(20)
         return df_sorted.to_dict(orient="records")
@@ -329,7 +337,7 @@ class DataService:
         result = df.copy()
         result = result[result["price_change_pct"].notna()]
         if suspicious_only and "is_discount_suspicious" in result.columns:
-            result = result[result["is_discount_suspicious"] == True]
+            result = result[result["is_discount_suspicious"]]
 
         result = result.assign(_abs_change=result["price_change_pct"].abs())
         result = result.sort_values(by="_abs_change", ascending=False).head(limit)

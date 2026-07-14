@@ -22,13 +22,14 @@ GOLD_TOPICS_PATH = project_root / "data" / "gold" / "negative_topics"
 
 # Stopwords tiếng Việt cơ bản để loại bỏ các từ vô nghĩa
 VIETNAMESE_STOPWORDS = [
-    "là", "thì", "mà", "có", "không", "rất", "quá", "nhưng", "và", "của", "cho", 
+    "là", "thì", "mà", "có", "không", "rất", "quá", "nhưng", "và", "của", "cho",
     "những", "các", "một", "như", "với", "được", "bị", "sẽ", "đã", "đang", "cũng",
-    "còn", "nên", "ra", "lại", "này", "kia", "đó", "đây", "ấy", "vậy", "rồi", 
+    "còn", "nên", "ra", "lại", "này", "kia", "đó", "đây", "ấy", "vậy", "rồi",
     "nữa", "hơi", "lắm", "thế", "nào", "mới", "thấy", "hàng", "sản_phẩm", "shop", "mua",
     "giao", "nhận", "sp", "người", "khi", "trong", "ngoài", "về", "làm", "nhé", "nha", "ạ",
     "mình", "bạn", "tôi", "em", "anh", "chị"
 ]
+
 
 def run_topic_modeling():
     logger.info("🔍 Bắt đầu trích xuất chủ đề (Topic Modeling) từ đánh giá tiêu cực...")
@@ -71,40 +72,40 @@ def run_topic_modeling():
 
     # 3. Trích xuất n-grams bằng CountVectorizer
     logger.info("   Đang trích xuất các cụm 2-3 từ (n-grams)...")
-    
+
     try:
-        # Sử dụng ngram_range=(2, 3) để lấy cụm 2 hoặc 3 từ (vd: "giao hàng chậm", "chất lượng kém")
+        # Sử dụng ngram_range=(2, 3) để lấy cụm 2 hoặc 3 từ
         vectorizer = CountVectorizer(
             ngram_range=(2, 3),
             stop_words=VIETNAMESE_STOPWORDS,
-            min_df=2, # Xuất hiện ít nhất 2 lần
-            max_features=100 # Lấy top 100 cụm từ
+            min_df=2,           # Xuất hiện ít nhất 2 lần
+            max_features=100    # Lấy top 100 cụm từ
         )
-        
+
         X = vectorizer.fit_transform(texts)
-        
+
         # Tính tổng số lần xuất hiện của mỗi cụm từ
         word_counts = X.sum(axis=0).A1
         words = vectorizer.get_feature_names_out()
-        
+
         # 4. Tạo DataFrame kết quả
         topics_df = pd.DataFrame({"topic": words, "count": word_counts})
-        topics_df = topics_df.sort_values(by="count", ascending=False).head(20) # Lấy top 20
-        
+        topics_df = topics_df.sort_values(by="count", ascending=False).head(20)
+
         logger.info("📊 Top 5 phàn nàn phổ biến nhất:")
-        for idx, row in topics_df.head(5).iterrows():
+        for _, row in topics_df.head(5).iterrows():
             logger.info(f"   - {row['topic']}: {row['count']} lần")
-            
+
         # 5. Lưu ra file Parquet
         GOLD_TOPICS_PATH.mkdir(parents=True, exist_ok=True)
         output_file = GOLD_TOPICS_PATH / "topics.parquet"
         topics_df.to_parquet(output_file, index=False)
         logger.success(f"✅ Đã lưu top 20 chủ đề tại: {output_file}")
-        
+
     except Exception as e:
         logger.error(f"Lỗi khi trích xuất chủ đề: {e}")
         # Nếu quá ít dữ liệu hoặc không extract được n-grams
-        pass
+
 
 if __name__ == "__main__":
     run_topic_modeling()

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
 export default function Error({ error, reset }) {
@@ -26,12 +27,12 @@ export default function Error({ error, reset }) {
             <RefreshCw className="w-4 h-4" />
             Thử lại
           </button>
-          <a
+          <Link
             href="/"
             className="px-5 py-2.5 border border-slate-200 text-slate-600 text-sm font-medium rounded-xl hover:bg-slate-50 transition-colors"
           >
             Về trang chủ
-          </a>
+          </Link>
         </div>
       </div>
     </div>
