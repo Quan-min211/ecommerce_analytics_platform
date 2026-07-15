@@ -147,3 +147,7 @@ export async function getProductReviews(productId) {
 export async function getHealth() {
   return fetchAPI("/api/health");
 }
+
+export async function getDataStatus() {
+  return fetchAPI("/api/analytics/data-status");
+}

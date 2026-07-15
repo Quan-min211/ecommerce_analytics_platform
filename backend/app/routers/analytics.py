@@ -121,3 +121,39 @@ async def get_price_volatility(
     Nếu suspicious_only=true, chỉ trả về các case giảm giá sâu đáng nghi.
     """
     return data_service.get_price_volatility(limit=limit, suspicious_only=suspicious_only)
+
+
+@router.get("/data-status", summary="Trạng thái dữ liệu Gold Layer")
+async def get_data_status(response: Response):
+    """
+    Trả về thông tin freshness của dữ liệu:
+    - Thời điểm load lần cuối
+    - Số rows mỗi dataset
+    - Các dataset nào đang thiếu (chưa chạy ML pipeline)
+
+    Dùng để hiển thị "Dữ liệu cập nhật lần cuối: ..." trên Dashboard.
+    """
+    response.headers["Cache-Control"] = "public, max-age=30"
+
+    loaded_at = getattr(data_service, "_loaded_at", None)
+    return {
+        "loaded_at": loaded_at.isoformat() if loaded_at else None,
+        "datasets": {
+            "product_metrics": {
+                "rows": len(data_service.df_product_metrics),
+                "available": not data_service.df_product_metrics.empty,
+            },
+            "sentiment": {
+                "rows": len(data_service.df_sentiment),
+                "available": not data_service.df_sentiment.empty,
+            },
+            "negative_topics": {
+                "rows": len(data_service.df_negative_topics),
+                "available": not data_service.df_negative_topics.empty,
+            },
+            "price_history": {
+                "rows": len(data_service.df_price_history),
+                "available": not data_service.df_price_history.empty,
+            },
+        },
+    }

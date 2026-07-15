@@ -49,20 +49,28 @@ class DataService:
         if not self.df_sentiment.empty:
             logger.info(f"  → Sentiment: {len(self.df_sentiment)} rows")
         else:
-            logger.warning("  ⚠ Chưa có dữ liệu sentiment. Chạy: python -m ml.sentiment_analysis")
+            logger.info("  ℹ Chưa có sentiment data. Chạy: python -m ml.sentiment_analysis")
 
         self.df_reviews = self.df_sentiment.copy()
-        logger.info(f"  → Reviews: {len(self.df_reviews)} rows")
+        if not self.df_reviews.empty:
+            logger.info(f"  → Reviews: {len(self.df_reviews)} rows")
 
-        # Đọc Negative Topics
+        # Đọc Negative Topics (optional — chỉ có sau khi chạy topic_modeling)
         self.df_negative_topics = self._read_parquet_dir(GOLD_NEGATIVE_TOPICS_PATH)
         if not self.df_negative_topics.empty:
             logger.info(f"  → Negative Topics: {len(self.df_negative_topics)} topics")
+        else:
+            logger.info("  ℹ Chưa có topic data. Chạy: python -m ml.topic_modeling")
 
         # Đọc Gold Price History cho phân tích time-series
         self.df_price_history = self._read_parquet_dir(GOLD_PRICE_HISTORY_PATH)
         if not self.df_price_history.empty:
             logger.info(f"  → Price History: {len(self.df_price_history)} snapshots")
+        else:
+            logger.info("  ℹ Chưa có price history data.")
+
+        # Lưu data freshness timestamp
+        self._loaded_at = pd.Timestamp.now()
 
         self._loaded = True
         logger.success("✅ Dữ liệu đã được load vào memory!")
