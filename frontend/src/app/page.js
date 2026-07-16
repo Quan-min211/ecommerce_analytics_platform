@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Package, DollarSign, Star, MessageSquare, Hash, Tag, AlertTriangle } from "lucide-react";
+import { Package, DollarSign, Star, MessageSquare, Hash, Tag, AlertTriangle, Download } from "lucide-react";
 import KpiCard from "@/components/KpiCard";
 import RatingChart from "@/components/RatingChart";
 import SentimentChart from "@/components/SentimentChart";
@@ -70,6 +70,32 @@ export default function OverviewPage() {
   };
 
   const hasActiveFilter = appliedFilters.keyword || appliedFilters.min_price !== null || appliedFilters.max_price !== null;
+
+  const handleExportCSV = () => {
+    if (!topProducts || topProducts.length === 0) return;
+
+    const headers = ["Tên sản phẩm", "Từ khóa", "Giá (VNĐ)", "Rating TB", "Tổng đánh giá", "Đã bán", "URL"];
+    const rows = topProducts.map((p) => [
+      `"${(p.name || "").replace(/"/g, '""')}"`,
+      `"${(p.keyword || "").replace(/"/g, '""')}"`,
+      p.price || 0,
+      (p.avg_rating || 0).toFixed(2),
+      p.total_reviews || 0,
+      p.sold_count || 0,
+      `"${p.url || ""}"`,
+    ]);
+
+    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `shopee_products_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   // Retry trigger — incrementing this causes the effect to re-run
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -168,8 +194,19 @@ export default function OverviewPage() {
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard Overview</h1>
             <p className="text-slate-500 mt-1 text-sm">Tổng quan dữ liệu thương mại điện tử Shopee</p>
           </div>
-          <div className="text-xs text-slate-400 bg-white px-4 py-2 rounded-xl border border-slate-100">
-            {new Date().toLocaleDateString("vi-VN", { day: "numeric", month: "long", year: "numeric" })}
+          <div className="flex items-center gap-3">
+            <button
+              id="btn-export-csv"
+              onClick={handleExportCSV}
+              disabled={topProducts.length === 0}
+              className="flex items-center gap-2 px-3.5 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-semibold rounded-xl hover:bg-slate-50 hover:border-emerald-400 hover:text-emerald-700 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Xuất CSV
+            </button>
+            <div className="text-xs text-slate-400 bg-white px-4 py-2 rounded-xl border border-slate-100">
+              {new Date().toLocaleDateString("vi-VN", { day: "numeric", month: "long", year: "numeric" })}
+            </div>
           </div>
         </div>
 
@@ -250,33 +287,28 @@ export default function OverviewPage() {
             value={overview?.total_products?.toLocaleString("vi-VN") || "0"}
             icon={Package}
             color="emerald"
-            trend="+12%"
-            sparklineData={[{val: 10}, {val: 15}, {val: 20}, {val: 22}, {val: 25}, {val: 30}, {val: 28}, {val: 35}]}
+            subtitle={`Từ ${overview?.total_keywords || 0} từ khóa`}
           />
           <KpiCard
             title="Từ khóa đã cào"
             value={overview?.total_keywords || 0}
             icon={Hash}
             color="teal"
-            trend="+2"
-            sparklineData={[{val: 1}, {val: 1}, {val: 2}, {val: 2}, {val: 3}, {val: 3}, {val: 4}, {val: 4}]}
-            subtitle={keywordStats.map(k => k.keyword).join(", ")}
+            subtitle={keywordStats.slice(0, 3).map(k => k.keyword).join(", ") || "—"}
           />
           <KpiCard
             title="Rating trung bình"
-            value={`${(overview?.avg_rating || 0).toFixed(1)}`}
+            value={`${(overview?.avg_rating || 0).toFixed(2)} ★`}
             icon={Star}
             color="amber"
-            trend="+0.1"
-            sparklineData={[{val: 4.5}, {val: 4.6}, {val: 4.5}, {val: 4.7}, {val: 4.6}, {val: 4.8}, {val: 4.8}, {val: 4.9}]}
+            subtitle="Dựa trên toàn bộ sản phẩm"
           />
           <KpiCard
             title="Tổng đánh giá"
             value={(overview?.total_reviews || 0).toLocaleString("vi-VN")}
             icon={MessageSquare}
             color="rose"
-            trend="+45%"
-            sparklineData={[{val: 100}, {val: 120}, {val: 130}, {val: 150}, {val: 200}, {val: 250}, {val: 280}, {val: 350}]}
+            subtitle={`TB ${Math.round((overview?.total_reviews || 0) / Math.max(overview?.total_products || 1, 1))} đánh giá/sản phẩm`}
           />
         </div>
 

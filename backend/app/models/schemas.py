@@ -67,3 +67,55 @@ class HealthResponse(BaseModel):
     status: str
     total_products: int
     total_reviews: int
+
+
+class SentimentOverview(BaseModel):
+    """Schema cho sentiment phân tích."""
+    positive: int = 0
+    negative: int = 0
+    neutral: int = 0
+    total: int = 0
+    positive_pct: float = 0.0
+    negative_pct: float = 0.0
+    neutral_pct: float = 0.0
+
+
+class KeywordStat(BaseModel):
+    """Thống kê theo từng keyword."""
+    keyword: str
+    total_products: int = 0
+    avg_price: float = 0.0
+    avg_rating: float = 0.0
+    total_reviews: int = 0
+    rating_distribution: Optional[dict] = None
+
+
+class NegativeTopic(BaseModel):
+    """Một chủ đề phàn nàn từ topic modeling."""
+    topic: str
+    count: int = 0
+
+
+class PriceVolatilityItem(BaseModel):
+    """Snapshot biến động giá."""
+    product_id: Optional[str] = None
+    name: Optional[str] = None
+    price: Optional[float] = None
+    price_change_pct: Optional[float] = None
+    is_discount_suspicious: Optional[bool] = None
+    scraped_at: Optional[str] = None
+
+    class Config:
+        extra = "allow"  # Gold layer có thể có thêm cột
+
+
+class DatasetStatus(BaseModel):
+    """Trạng thái một dataset."""
+    rows: int = 0
+    available: bool = False
+
+
+class DataStatusResponse(BaseModel):
+    """Response cho /data-status endpoint."""
+    loaded_at: Optional[str] = None
+    datasets: dict[str, DatasetStatus] = {}

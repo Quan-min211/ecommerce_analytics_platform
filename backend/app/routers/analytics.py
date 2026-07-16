@@ -7,7 +7,15 @@ from typing import Optional
 
 from fastapi import APIRouter, Query, Response
 
-from backend.app.models.schemas import AnalyticsOverview, RatingDistribution
+from backend.app.models.schemas import (
+    AnalyticsOverview,
+    DataStatusResponse,
+    KeywordStat,
+    NegativeTopic,
+    PriceVolatilityItem,
+    RatingDistribution,
+    SentimentOverview,
+)
 from backend.app.services.data_service import data_service
 
 router = APIRouter(prefix="/api/analytics", tags=["Analytics"])
@@ -30,7 +38,7 @@ async def get_overview(
     )
 
 
-@router.get("/top-products", summary="Top sản phẩm")
+@router.get("/top-products", response_model=list[dict], summary="Top sản phẩm")
 async def get_top_products(
     response: Response,
     metric: str = Query(
@@ -67,7 +75,7 @@ async def get_rating_distribution(response: Response):
     return data_service.get_rating_distribution()
 
 
-@router.get("/sentiment-overview", summary="Tổng quan cảm xúc")
+@router.get("/sentiment-overview", response_model=SentimentOverview, summary="Tổng quan cảm xúc")
 async def get_sentiment_overview(response: Response):
     """
     Thống kê cảm xúc review (NLP Sentiment Analysis).
@@ -77,7 +85,7 @@ async def get_sentiment_overview(response: Response):
     return data_service.get_sentiment_overview()
 
 
-@router.get("/keyword-stats", summary="Thống kê theo từ khóa")
+@router.get("/keyword-stats", response_model=list[KeywordStat], summary="Thống kê theo từ khóa")
 async def get_keyword_stats(response: Response):
     """
     Thống kê chi tiết cho từng từ khóa đã cào.
@@ -87,7 +95,7 @@ async def get_keyword_stats(response: Response):
     return data_service.get_keyword_stats()
 
 
-@router.get("/negative-topics", summary="Chủ đề đánh giá tiêu cực")
+@router.get("/negative-topics", response_model=list[NegativeTopic], summary="Chủ đề đánh giá tiêu cực")
 async def get_negative_topics(response: Response):
     """
     Top cụm từ phàn nàn nhiều nhất (NLP Topic Modeling).
@@ -109,7 +117,7 @@ async def get_price_history(product_id: str):
     }
 
 
-@router.get("/price-volatility", summary="Sản phẩm biến động giá mạnh")
+@router.get("/price-volatility", response_model=list[PriceVolatilityItem], summary="Sản phẩm biến động giá mạnh")
 async def get_price_volatility(
     limit: int = Query(20, ge=1, le=100, description="Số lượng snapshot trả về"),
     suspicious_only: bool = Query(
@@ -123,7 +131,7 @@ async def get_price_volatility(
     return data_service.get_price_volatility(limit=limit, suspicious_only=suspicious_only)
 
 
-@router.get("/data-status", summary="Trạng thái dữ liệu Gold Layer")
+@router.get("/data-status", response_model=DataStatusResponse, summary="Trạng thái dữ liệu Gold Layer")
 async def get_data_status(response: Response):
     """
     Trả về thông tin freshness của dữ liệu:
