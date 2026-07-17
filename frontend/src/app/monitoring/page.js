@@ -15,12 +15,13 @@ export default function MonitoringPage() {
   const [loading, setLoading] = useState(true);
   const [reloading, setReloading] = useState(false);
   const [error, setError] = useState(null);
-  const [host, setHost] = useState("");
+  // Lazy initializer — reads window only on first render (no effect needed)
+  const [host] = useState(() =>
+    typeof window !== "undefined" ? window.location.hostname : ""
+  );
   const [lastRefresh, setLastRefresh] = useState(null);
 
-  useEffect(() => {
-    setHost(window.location.hostname);
-  }, []);
+  // Removed: useEffect(() => { setHost(...) }) — replaced by lazy useState above
 
   useEffect(() => {
     let cancelled = false;

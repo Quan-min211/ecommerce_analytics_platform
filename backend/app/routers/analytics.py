@@ -95,7 +95,11 @@ async def get_keyword_stats(response: Response):
     return data_service.get_keyword_stats()
 
 
-@router.get("/negative-topics", response_model=list[NegativeTopic], summary="Chủ đề đánh giá tiêu cực")
+@router.get(
+    "/negative-topics",
+    response_model=list[NegativeTopic],
+    summary="Chủ đề đánh giá tiêu cực",
+)
 async def get_negative_topics(response: Response):
     """
     Top cụm từ phàn nàn nhiều nhất (NLP Topic Modeling).
@@ -117,7 +121,11 @@ async def get_price_history(product_id: str):
     }
 
 
-@router.get("/price-volatility", response_model=list[PriceVolatilityItem], summary="Sản phẩm biến động giá mạnh")
+@router.get(
+    "/price-volatility",
+    response_model=list[PriceVolatilityItem],
+    summary="Sản phẩm biến động giá mạnh",
+)
 async def get_price_volatility(
     limit: int = Query(20, ge=1, le=100, description="Số lượng snapshot trả về"),
     suspicious_only: bool = Query(
@@ -131,7 +139,11 @@ async def get_price_volatility(
     return data_service.get_price_volatility(limit=limit, suspicious_only=suspicious_only)
 
 
-@router.get("/data-status", response_model=DataStatusResponse, summary="Trạng thái dữ liệu Gold Layer")
+@router.get(
+    "/data-status",
+    response_model=DataStatusResponse,
+    summary="Trạng thái dữ liệu Gold Layer",
+)
 async def get_data_status(response: Response):
     """
     Trả về thông tin freshness của dữ liệu:
