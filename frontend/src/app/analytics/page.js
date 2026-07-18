@@ -43,7 +43,7 @@ export default function AnalyticsPage() {
           getRatingDistribution(),
           getTopProducts("avg_rating", 10),
           getTopProducts("total_reviews", 10),
-          getPriceVolatility({ limit: 10, suspiciousOnly: false }),
+          getPriceVolatility(10, false),
         ]);
         setRatingDist(rd);
         setTopByRating(tr);

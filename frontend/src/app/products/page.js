@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Search, ChevronLeft, ChevronRight, Star, ArrowUpDown, Eye, MessageSquare, Download, RefreshCw, Filter } from "lucide-react";
 import { getProducts, getKeywordStats } from "@/lib/api";
 import ProductModal from "@/components/ProductModal";
