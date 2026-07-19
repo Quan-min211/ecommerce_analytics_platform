@@ -6,6 +6,7 @@ import {
   Activity, RefreshCw, Server, Database, ExternalLink,
   CheckCircle, AlertCircle, Clock, BarChart2, FileText,
 } from "lucide-react";
+import { getHealth, getDataStatus } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -28,16 +29,14 @@ export default function MonitoringPage() {
 
     async function fetchAll() {
       try {
-        const [healthRes, statusRes] = await Promise.all([
-          fetch(`${API_BASE}/api/health`),
-          fetch(`${API_BASE}/api/analytics/data-status`),
+        const [healthData, statusData] = await Promise.all([
+          getHealth().catch(() => null),
+          getDataStatus().catch(() => null),
         ]);
-        const healthData = healthRes.ok ? await healthRes.json() : null;
-        const statusData = statusRes.ok ? await statusRes.json() : null;
         if (!cancelled) {
           setHealth(healthData);
           setDataStatus(statusData);
-          setError(null);
+          setError(healthData ? null : "Backend API không phản hồi");
           setLastRefresh(new Date());
         }
       } catch (err) {
@@ -61,12 +60,12 @@ export default function MonitoringPage() {
       const res = await fetch(`${API_BASE}/api/reload`, { method: "POST" });
       if (!res.ok) throw new Error("Failed to reload data");
       // Re-fetch status after reload
-      const [healthRes, statusRes] = await Promise.all([
-        fetch(`${API_BASE}/api/health`),
-        fetch(`${API_BASE}/api/analytics/data-status`),
+      const [healthData, statusData] = await Promise.all([
+        getHealth().catch(() => null),
+        getDataStatus().catch(() => null),
       ]);
-      setHealth(healthRes.ok ? await healthRes.json() : null);
-      setDataStatus(statusRes.ok ? await statusRes.json() : null);
+      setHealth(healthData);
+      setDataStatus(statusData);
       setLastRefresh(new Date());
     } catch (err) {
       alert("Error reloading data: " + err.message);

@@ -9,13 +9,14 @@ import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from loguru import logger
 from prometheus_fastapi_instrumentator import Instrumentator
 
+from backend.app.config import ADMIN_API_KEY, CORS_ORIGINS
 from backend.app.models.schemas import HealthResponse
 from backend.app.routers import analytics, products
 from backend.app.services.data_service import data_service
@@ -45,7 +46,7 @@ app = FastAPI(
 # CORS — cho phép frontend (Next.js) gọi API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8000"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -70,10 +71,23 @@ async def health_check():
 
 
 @app.post("/api/reload", tags=["System"])
-async def reload_data():
-    """Reload dữ liệu từ Gold Layer (gọi sau khi ETL pipeline chạy xong)."""
+async def reload_data(
+    x_admin_key: str = Header(None, alias="X-Admin-Key"),
+):
+    """
+    Reload dữ liệu từ Gold Layer (gọi sau khi ETL pipeline chạy xong).
+    Nếu ADMIN_API_KEY được set trong env, yêu cầu header X-Admin-Key.
+    """
+    if ADMIN_API_KEY and x_admin_key != ADMIN_API_KEY:
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: invalid or missing X-Admin-Key header.",
+        )
     data_service.reload_data()
-    return {"status": "reloaded", "total_products": len(data_service.df_product_metrics)}
+    return {
+        "status": "reloaded",
+        "total_products": len(data_service.df_product_metrics),
+    }
 
 
 # === Global Exception Handlers ===

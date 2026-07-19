@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Package, DollarSign, Star, MessageSquare, Hash, Tag, AlertTriangle, Download } from "lucide-react";
+import { Package, Star, MessageSquare, Hash, Tag, AlertTriangle, Download } from "lucide-react";
 import KpiCard from "@/components/KpiCard";
 import RatingChart from "@/components/RatingChart";
 import SentimentChart from "@/components/SentimentChart";

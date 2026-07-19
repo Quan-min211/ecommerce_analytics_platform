@@ -84,7 +84,6 @@ class DataService:
         """Đọc tất cả file .parquet trong thư mục thành 1 DataFrame."""
         parquet_files = list(directory.glob("*.parquet"))
         if not parquet_files:
-            logger.warning(f"Không tìm thấy file .parquet trong: {directory}")
             return pd.DataFrame()
 
         dfs = [pd.read_parquet(f) for f in parquet_files]

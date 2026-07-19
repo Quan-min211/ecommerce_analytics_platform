@@ -2,6 +2,7 @@
 Cấu hình cho Backend API.
 """
 
+import os
 from pathlib import Path
 
 # Đường dẫn gốc của project
@@ -23,3 +24,16 @@ API_DEBUG = True
 # Pagination defaults
 DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 100
+
+# Security
+ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", None)
+
+# CORS — comma-separated origins, defaults to localhost dev
+CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000",
+    ).split(",")
+    if origin.strip()
+]
