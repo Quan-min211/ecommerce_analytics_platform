@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Package, BarChart3, Activity, TrendingUp } from "lucide-react";
+import { LayoutDashboard, Package, BarChart3, Activity, TrendingUp, GitBranch } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/products", label: "Products", icon: Package },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/pipeline", label: "Pipeline", icon: GitBranch },
   { href: "/monitoring", label: "Monitoring", icon: Activity },
 ];
 
