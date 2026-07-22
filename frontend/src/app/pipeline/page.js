@@ -163,8 +163,9 @@ export default function PipelinePage() {
   const [lastRefresh, setLastRefresh] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  async function fetchStatus(isManual = false) {
-    if (isManual) setRefreshing(true);
+  // Manual refresh handler — called by the button, not inside useEffect
+  const handleRefresh = async () => {
+    setRefreshing(true);
     try {
       const [h, ds] = await Promise.all([
         getHealth().catch(() => null),
@@ -174,17 +175,33 @@ export default function PipelinePage() {
       setDataStatus(ds);
       setLastRefresh(new Date());
     } finally {
-      setLoading(false);
       setRefreshing(false);
     }
-  }
+  };
 
   useEffect(() => {
     let cancelled = false;
-    if (!cancelled) fetchStatus();
-    const interval = setInterval(() => { if (!cancelled) fetchStatus(); }, 30000);
+
+    async function load() {
+      try {
+        const [h, ds] = await Promise.all([
+          getHealth().catch(() => null),
+          getDataStatus().catch(() => null),
+        ]);
+        if (!cancelled) {
+          setHealth(h);
+          setDataStatus(ds);
+          setLastRefresh(new Date());
+          setLoading(false);
+        }
+      } catch {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    const interval = setInterval(load, 30000);
     return () => { cancelled = true; clearInterval(interval); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Derive real stats from API
@@ -261,7 +278,7 @@ export default function PipelinePage() {
             </span>
           )}
           <button
-            onClick={() => fetchStatus(true)}
+            onClick={handleRefresh}
             disabled={refreshing}
             className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
