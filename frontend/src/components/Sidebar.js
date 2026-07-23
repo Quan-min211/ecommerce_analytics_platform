@@ -1,2 +1,1 @@
-// DEPRECATED: This component has been replaced by Navbar.js
-// Safe to delete — kept temporarily for git tracking.
+// This file has been deleted. Sidebar was replaced by Navbar.js.

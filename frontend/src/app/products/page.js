@@ -47,7 +47,8 @@ export default function ProductsPage() {
     setIsCrawling(true);
     setCrawlStatus(`Đang yêu cầu cào ${limit} sản phẩm...`);
     try {
-      const res = await fetch("http://localhost:8001/api/crawl", {
+      const crawlerUrl = process.env.NEXT_PUBLIC_CRAWLER_URL || "http://localhost:8001";
+      const res = await fetch(`${crawlerUrl}/api/crawl`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ keyword: crawlKeyword, limit })

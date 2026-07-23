@@ -111,17 +111,21 @@ An end-to-end data engineering and analytics project that collects, processes, a
 │       ├── app/             #   App Router pages
 │       │   ├── page.js      #     Dashboard overview
 │       │   ├── products/    #     Product listing & search
-│       │   └── analytics/   #     Advanced charts & analysis
+│       │   ├── analytics/   #     Advanced charts & analysis
+│       │   ├── pipeline/    #     Data pipeline visualization
+│       │   └── monitoring/  #     System health & dataset status
 │       ├── components/      #   Reusable UI components
-│       │   ├── Sidebar.js
+│       │   ├── Navbar.js
+│       │   ├── Footer.js
 │       │   ├── KpiCard.js
 │       │   ├── RatingChart.js
 │       │   ├── SentimentChart.js
+│       │   ├── NegativeTopics.js
 │       │   ├── TopProductsTable.js
 │       │   ├── ProductModal.js
 │       │   └── ReviewsModal.js
 │       └── lib/
-│           └── api.js       #   API client
+│           └── api.js       #   Centralized API client
 │
 ├── data/                    # Data lake (gitignored)
 │   ├── raw/                 #   Original JSONL files
@@ -294,11 +298,26 @@ Base URL: `http://localhost:8000`
 | GET | `/api/analytics/top-products` | Top N products by metric |
 | GET | `/api/analytics/rating-distribution` | Star rating distribution (1-5) |
 | GET | `/api/analytics/sentiment-overview` | Sentiment analysis summary |
+| GET | `/api/analytics/keyword-stats` | Per-keyword statistics |
+| GET | `/api/analytics/negative-topics` | Top negative review topics (NLP) |
 | GET | `/api/analytics/price-history/{product_id}` | Product price history over time |
 | GET | `/api/analytics/price-volatility` | Products with strongest price changes |
-| POST | `/api/reload` | Reload data from Gold Layer |
+| GET | `/api/analytics/data-status` | Gold Layer dataset freshness & row counts |
+| POST | `/api/reload` | Reload data from Gold Layer (auth via `X-Admin-Key` header) |
 
 Interactive API documentation is available at [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger UI).
+
+---
+
+## Dashboard Pages
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/` | Dashboard Overview | KPI cards, filter bar, keyword stats, rating/sentiment charts, top products table |
+| `/products` | Product Explorer | Searchable product table with pagination, sorting, modals for detail/reviews |
+| `/analytics` | Advanced Analytics | Price volatility analysis, scatter plots, detailed sentiment breakdowns |
+| `/pipeline` | Pipeline Overview | Medallion Architecture flow diagram, ML pipeline steps, live dataset status, tech stack |
+| `/monitoring` | System Monitoring | API health, dataset availability, data freshness, Grafana/Prometheus links |
 
 ---
 

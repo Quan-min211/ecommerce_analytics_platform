@@ -175,3 +175,57 @@ class TestSentimentAnalysis:
         from ml.sentiment_analysis import analyze_sentiment
         result = analyze_sentiment(None)
         assert result["sentiment_label"] == "neutral"
+
+
+# ==============================
+# Test Reload Auth
+# ==============================
+
+class TestReloadAuth:
+    """Test /api/reload endpoint authentication."""
+
+    @pytest.fixture
+    def client_with_key(self):
+        """Create a TestClient with ADMIN_API_KEY set."""
+        with patch("backend.app.config.ADMIN_API_KEY", "test-secret-key"):
+            with patch("backend.app.main.ADMIN_API_KEY", "test-secret-key"):
+                from backend.app.main import app
+                from fastapi.testclient import TestClient
+                return TestClient(app)
+
+    @pytest.fixture
+    def client_no_key(self):
+        """Create a TestClient without ADMIN_API_KEY (dev mode)."""
+        with patch("backend.app.config.ADMIN_API_KEY", None):
+            with patch("backend.app.main.ADMIN_API_KEY", None):
+                from backend.app.main import app
+                from fastapi.testclient import TestClient
+                return TestClient(app)
+
+    def test_reload_rejected_with_wrong_key(self, client_with_key):
+        """Should return 403 when wrong API key is provided."""
+        response = client_with_key.post(
+            "/api/reload",
+            headers={"X-Admin-Key": "wrong-key"},
+        )
+        assert response.status_code == 403
+
+    def test_reload_rejected_without_key(self, client_with_key):
+        """Should return 403 when no API key header is sent."""
+        response = client_with_key.post("/api/reload")
+        assert response.status_code == 403
+
+    def test_reload_success_with_correct_key(self, client_with_key):
+        """Should succeed when correct API key is provided."""
+        response = client_with_key.post(
+            "/api/reload",
+            headers={"X-Admin-Key": "test-secret-key"},
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == "reloaded"
+
+    def test_reload_success_without_auth_in_dev(self, client_no_key):
+        """Should succeed without auth when ADMIN_API_KEY is not set."""
+        response = client_no_key.post("/api/reload")
+        assert response.status_code == 200
+        assert response.json()["status"] == "reloaded"

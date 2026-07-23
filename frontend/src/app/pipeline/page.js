@@ -238,12 +238,12 @@ export default function PipelinePage() {
     },
     {
       label: "Gold Freshness",
-      value: datasets.product_metrics?.loaded_at
-        ? new Date(datasets.product_metrics.loaded_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+      value: dataStatus?.loaded_at
+        ? new Date(dataStatus.loaded_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
         : "—",
       sub: "Last reload into memory",
       icon: Clock,
-      status: datasets.product_metrics?.loaded_at ? "ok" : "warn",
+      status: dataStatus?.loaded_at ? "ok" : "warn",
       color: "sky",
     },
   ];
@@ -457,23 +457,23 @@ export default function PipelinePage() {
                 <div>
                   <MetricPill
                     label="product_metrics"
-                    value={datasets.product_metrics?.row_count != null ? `${datasets.product_metrics.row_count.toLocaleString("vi-VN")} rows` : "Not loaded"}
-                    status={datasets.product_metrics?.row_count ? "ok" : "warn"}
+                    value={datasets.product_metrics?.rows != null ? `${datasets.product_metrics.rows.toLocaleString("vi-VN")} rows` : "Not loaded"}
+                    status={datasets.product_metrics?.available ? "ok" : "warn"}
                   />
                   <MetricPill
-                    label="reviews_sentiment"
-                    value={datasets.reviews_sentiment?.row_count != null ? `${datasets.reviews_sentiment.row_count.toLocaleString("vi-VN")} rows` : "Not loaded"}
-                    status={datasets.reviews_sentiment?.row_count ? "ok" : "warn"}
+                    label="sentiment"
+                    value={datasets.sentiment?.rows != null ? `${datasets.sentiment.rows.toLocaleString("vi-VN")} rows` : "Not loaded"}
+                    status={datasets.sentiment?.available ? "ok" : "warn"}
                   />
                   <MetricPill
                     label="negative_topics"
-                    value={datasets.negative_topics?.row_count != null ? `${datasets.negative_topics.row_count.toLocaleString("vi-VN")} rows` : "Not loaded"}
-                    status={datasets.negative_topics?.row_count ? "ok" : "warn"}
+                    value={datasets.negative_topics?.rows != null ? `${datasets.negative_topics.rows.toLocaleString("vi-VN")} rows` : "Not loaded"}
+                    status={datasets.negative_topics?.available ? "ok" : "warn"}
                   />
                   <MetricPill
                     label="price_history"
-                    value={datasets.price_history?.row_count != null ? `${datasets.price_history.row_count.toLocaleString("vi-VN")} rows` : "Not loaded"}
-                    status={datasets.price_history?.row_count ? "ok" : "warn"}
+                    value={datasets.price_history?.rows != null ? `${datasets.price_history.rows.toLocaleString("vi-VN")} rows` : "Not loaded"}
+                    status={datasets.price_history?.available ? "ok" : "warn"}
                   />
                   <MetricPill
                     label="FastAPI uptime"

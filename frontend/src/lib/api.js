@@ -151,3 +151,7 @@ export async function getHealth() {
 export async function getDataStatus() {
   return fetchAPI("/api/analytics/data-status");
 }
+
+export async function reloadData() {
+  return fetchAPI("/api/reload", { method: "POST" });
+}

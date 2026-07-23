@@ -6,9 +6,7 @@ import {
   Activity, RefreshCw, Server, Database, ExternalLink,
   CheckCircle, AlertCircle, Clock, BarChart2, FileText,
 } from "lucide-react";
-import { getHealth, getDataStatus } from "@/lib/api";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { getHealth, getDataStatus, reloadData } from "@/lib/api";
 
 export default function MonitoringPage() {
   const [health, setHealth] = useState(null);
@@ -16,13 +14,12 @@ export default function MonitoringPage() {
   const [loading, setLoading] = useState(true);
   const [reloading, setReloading] = useState(false);
   const [error, setError] = useState(null);
+  const [reloadError, setReloadError] = useState(null);
   // Lazy initializer — reads window only on first render (no effect needed)
   const [host] = useState(() =>
     typeof window !== "undefined" ? window.location.hostname : ""
   );
   const [lastRefresh, setLastRefresh] = useState(null);
-
-  // Removed: useEffect(() => { setHost(...) }) — replaced by lazy useState above
 
   useEffect(() => {
     let cancelled = false;
@@ -56,9 +53,9 @@ export default function MonitoringPage() {
 
   const handleReload = async () => {
     setReloading(true);
+    setReloadError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/reload`, { method: "POST" });
-      if (!res.ok) throw new Error("Failed to reload data");
+      await reloadData();
       // Re-fetch status after reload
       const [healthData, statusData] = await Promise.all([
         getHealth().catch(() => null),
@@ -68,7 +65,7 @@ export default function MonitoringPage() {
       setDataStatus(statusData);
       setLastRefresh(new Date());
     } catch (err) {
-      alert("Error reloading data: " + err.message);
+      setReloadError(err.message || "Không thể reload dữ liệu");
     } finally {
       setReloading(false);
     }
@@ -166,6 +163,21 @@ export default function MonitoringPage() {
         <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <p className="text-sm font-medium">Lỗi kết nối Backend: {error}</p>
+        </div>
+      )}
+
+      {reloadError && (
+        <div className="bg-amber-50 border border-amber-100 text-amber-700 px-4 py-3 rounded-xl flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <p className="text-sm font-medium">Reload thất bại: {reloadError}</p>
+          </div>
+          <button
+            onClick={() => setReloadError(null)}
+            className="text-xs text-amber-600 hover:text-amber-800 font-medium px-2 py-1 rounded hover:bg-amber-100 transition-colors"
+          >
+            Đóng
+          </button>
         </div>
       )}
 
