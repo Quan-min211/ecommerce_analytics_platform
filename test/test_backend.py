@@ -187,20 +187,18 @@ class TestReloadAuth:
     @pytest.fixture
     def client_with_key(self):
         """Create a TestClient with ADMIN_API_KEY set."""
-        with patch("backend.app.config.ADMIN_API_KEY", "test-secret-key"):
-            with patch("backend.app.main.ADMIN_API_KEY", "test-secret-key"):
-                from backend.app.main import app
-                from fastapi.testclient import TestClient
-                return TestClient(app)
+        with patch("backend.app.main.ADMIN_API_KEY", "test-secret-key"):
+            from backend.app.main import app
+            from fastapi.testclient import TestClient
+            yield TestClient(app)
 
     @pytest.fixture
     def client_no_key(self):
         """Create a TestClient without ADMIN_API_KEY (dev mode)."""
-        with patch("backend.app.config.ADMIN_API_KEY", None):
-            with patch("backend.app.main.ADMIN_API_KEY", None):
-                from backend.app.main import app
-                from fastapi.testclient import TestClient
-                return TestClient(app)
+        with patch("backend.app.main.ADMIN_API_KEY", None):
+            from backend.app.main import app
+            from fastapi.testclient import TestClient
+            yield TestClient(app)
 
     def test_reload_rejected_with_wrong_key(self, client_with_key):
         """Should return 403 when wrong API key is provided."""
